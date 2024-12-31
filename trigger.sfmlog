@@ -1,0 +1,56 @@
+
+const PROC_ID {iteration}
+const PROC_COUNT {iteration_count}
+
+import constants.sfmlog
+
+pop idiv TRIGGERS_PER_PROC 512 PROC_COUNT
+pop mul START_TRIGGER TRIGGERS_PER_PROC PROC_ID
+pop add END_TRIGGER START_TRIGGER TRIGGERS_PER_PROC
+
+
+MainLoop:
+	read playerX PLAYER_DATA DATA_X
+	read playerY PLAYER_DATA DATA_Y
+	set triggerID START_TRIGGER
+TriggerLoop:
+	read triggerType TRIGGER_TYPE triggerID
+	op add @counter @counter triggerType
+
+	jump ExitTrigger always
+	jump L_Copy always
+	jump L_Not always
+	jump L_And always
+	jump L_Or always
+	jump L_Xor always
+	jump L_Delay always
+	jump L_Toggle always
+	jump L_Latch always
+	jump E_Radius always
+	jump A_ClearWall always
+	jump A_TeleportPlayer always
+
+	ExitTrigger:
+op add triggerID triggerID 1
+jump TriggerLoop lessThan triggerID END_TRIGGER
+jump MainLoop always
+
+import "triggers/logic/copy.sfmlog"
+import "triggers/logic/not.sfmlog"
+import "triggers/logic/and.sfmlog"
+import "triggers/logic/or.sfmlog"
+import "triggers/logic/xor.sfmlog"
+import "triggers/logic/delay.sfmlog"
+import "triggers/logic/toggle.sfmlog"
+import "triggers/logic/latch.sfmlog"
+
+import "triggers/event/radius.sfmlog"
+
+import "triggers/action/clear_wall.sfmlog"
+import "triggers/action/teleport_player.sfmlog"
+
+defmac Distance out x1 y1 x2 y2
+	op sub x x1 x2
+	op sub y y1 y2
+	op len out x y 
+endmac

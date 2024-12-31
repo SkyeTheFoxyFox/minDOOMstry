@@ -1,0 +1,50 @@
+W_Salvo:
+    mac SetAmmo W_SALVO_AMMO hasAmmo
+    jump W_Salvo_ShootReset notEqual playerShooting true
+        jump W_Salvo_ShootReset greaterThanEq shootCount W_SALVO_SHOT_COUNT
+        jump W_Salvo_WasShoot equal wasShooting true
+            op add majorTestTime lastShootTime W_SALVO_BURST_DELAY
+            jump W_Salvo_NotShooting lessThan @second majorTestTime
+            set lastShootTime @second
+            set wasShooting true
+        W_Salvo_WasShoot:
+        op mul timeMod shootCount W_SALVO_SHOOT_DELAY
+        op add testTime lastShootTime timeMod
+        jump W_Salvo_NotShooting lessThan @second testTime
+
+        if equal hasAmmo true
+            mac GetAmmo ammo W_SALVO_AMMO
+            jump W_Salvo_NoAmmo lessThan ammo W_SALVO_AMMO_COST
+            op sub ammo ammo W_SALVO_AMMO_COST
+            mac SetAmmo ammo W_SALVO_AMMO
+        endif
+
+        op add shootCount shootCount 1
+
+        playsound false @sfx-shootBig 0.5 1 0 null null true
+
+        mac ApplyImpulse W_SALVO_RECOIL markerVelocity W_SALVO_MASS
+
+        op cos dx playerRot
+        op sin dy playerRot
+        op mul dx dx W_SALVO_SHOT_SPEED
+        op mul dy dy W_SALVO_SHOT_SPEED
+
+        mac MakePlayerBullet ENTITY_B_PBULLET playerX playerY dx dy W_SALVO_SHOT_DAMAGE W_SALVO_SHOT_SIZE
+        jump W_Salvo_NotShooting always
+    if equal hasAmmo true
+        W_Salvo_NoAmmo:
+        playsound false @sfx-noammo 1 1 0 null null true
+    endif
+    W_Salvo_ShootReset:
+    set wasShooting false
+    set shootCount 0
+    W_Salvo_NotShooting:
+    op mul markerSize 0.5 displayWidth
+    mac UpdateSpring markerYD markerVelocity -0.1 50 W_SALVO_MASS 0.90 dt
+    op mul markerYOffset markerYD displayHeight
+    op add markerDrawY displayY markerYOffset
+    setmarker textureSize MARKER_ID markerSize markerSize
+    setmarker texture MARKER_ID false "salvo-preview"
+    setmarker pos MARKER_ID displayCenterX markerDrawY
+jump WeaponOneSpriteExit always 

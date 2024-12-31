@@ -1,0 +1,12 @@
+L_Toggle:
+    read outIndex TRIGGER_INDEX triggerID
+    read index TRIGGER_DATA1 triggerID
+    read state TRIGGER_MEMORY index
+    read oldState TRIGGER_DATA2 triggerID
+    jump L_Toggle_Exit lessThanEq state oldState
+        read outState TRIGGER_MEMORY outIndex
+        op notEqual outState outState true
+        write outState TRIGGER_MEMORY outIndex
+    L_Toggle_Exit:
+    write state TRIGGER_DATA2 triggerID
+jump ExitTrigger always

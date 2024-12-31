@@ -1,0 +1,95 @@
+import constants.sfmlog
+import stats.sfmlog
+
+setrate 1000
+NoBlocks:
+jump NoBlocks equal ENTITY_CUSTOM_DATA4 null
+ClearLoop:
+	write 0 ENTITY_TYPE i
+	op add i i 1
+jump ClearLoop lessThan i 512
+pset entityID 0
+pset enemyID 128
+
+mac AddEntity ENTITY_P_COPPER 51.5 115.5 true null 1000
+mac AddEntity ENTITY_P_BLAST 51.5 118.5 true null 1000
+mac AddEntity ENTITY_P_SURGE 51.5 121.5 true null 1000
+
+mac AddEntity ENTITY_P_DUO 57.5 118.5 true
+mac AddEntity ENTITY_P_SCORCH 60.5 112.5 true
+mac AddEntity ENTITY_P_SALVO 57.5 112.5 true
+mac AddEntity ENTITY_P_SEGMENT 54.5 112.5 true
+mac AddEntity ENTITY_P_RIPPLE 60.5 124.5 true
+mac AddEntity ENTITY_P_MELTDOWN 57.5 124.5 true
+mac AddEntity ENTITY_P_FORESHADOW 54.5 124.5 true
+
+mac AddEnemy ENTITY_E_DAGGER 118.5 134.5 3 E_DAGGER_HEALTH 0
+mac AddEnemy ENTITY_E_DAGGER 118.5 132.5 3 E_DAGGER_HEALTH 0
+mac AddEnemy ENTITY_E_DAGGER 118.5 130.5 3 E_DAGGER_HEALTH 0
+
+mac AddEnemy ENTITY_E_CAT 82.5 107.5 4
+mac AddEntity ENTITY_I_SWITCH 122.5 138.5 3 null 4
+
+stop
+
+defmac AddEntity type x y enable health data1 data2 data3 data4 data5 data6
+	write type ENTITY_TYPE $entityID
+	write x ENTITY_X $entityID
+	write y ENTITY_Y $entityID
+	write enable ENTITY_ENABLE $entityID
+
+	if notEqual health null
+		write health ENTITY_HEALTH $entityID
+	endif
+	if notEqual data1 null
+		write data1 ENTITY_CUSTOM_DATA1 $entityID
+	endif
+	if notEqual data2 null
+		write data2 ENTITY_CUSTOM_DATA2 $entityID
+	endif
+	if notEqual data3 null
+		write data3 ENTITY_CUSTOM_DATA3 $entityID
+	endif
+	if notEqual data4 null
+		write data4 ENTITY_CUSTOM_DATA4 $entityID
+	endif
+	if notEqual data5 null
+		write data5 ENTITY_CUSTOM_DATA5 $entityID
+	endif
+	if notEqual data6 null
+		write data6 ENTITY_CUSTOM_DATA6 $entityID
+	endif
+
+	pop add $entityID $entityID 1
+endmac
+
+defmac AddEnemy type x y enable health data1 data2 data3 data4 data5 data6
+	write type ENTITY_TYPE $enemyID
+	write x ENTITY_X $enemyID
+	write y ENTITY_Y $enemyID
+	write enable ENTITY_ENABLE $enemyID
+
+	if notEqual health null
+		write health ENTITY_HEALTH $enemyID
+	endif
+	if notEqual data1 null
+		write data1 ENTITY_CUSTOM_DATA1 $enemyID
+	endif
+	if notEqual data2 null
+		write data2 ENTITY_CUSTOM_DATA2 $enemyID
+	endif
+	if notEqual data3 null
+		write data3 ENTITY_CUSTOM_DATA3 $enemyID
+	endif
+	if notEqual data4 null
+		write data4 ENTITY_CUSTOM_DATA4 $enemyID
+	endif
+	if notEqual data5 null
+		write data5 ENTITY_CUSTOM_DATA5 $enemyID
+	endif
+	if notEqual data6 null
+		write data6 ENTITY_CUSTOM_DATA6 $entityID
+	endif
+
+	pop add $enemyID $enemyID 1
+endmac

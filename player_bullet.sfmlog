@@ -1,0 +1,232 @@
+const PROC_ID {iteration}
+const PROC_COUNT {iteration_count}
+
+import constants.sfmlog
+import stats.sfmlog
+
+pop mul DISPLAY_FOV FOV 2
+pop mul -DISPLAY_FOV DISPLAY_FOV -1
+
+pop idiv ENTITIES_PER_PROC 32 PROC_COUNT
+pop mul START_ENTITY ENTITIES_PER_PROC PROC_ID
+pop add START_ENTITY START_ENTITY 480
+pop add END_ENTITY START_ENTITY ENTITIES_PER_PROC
+
+setrate 1000
+
+set entityID START_ENTITY
+InitLoop:
+	op mul markerID entityID 2
+	op add markerID markerID 5000
+	op add markerID2 markerID 1
+	setmarker remove markerID
+	setmarker remove markerID2
+	makemarker texture markerID 0 0 false
+	makemarker texture markerID2 0 0 false
+	op add entityID entityID 1
+jump InitLoop lessThan entityID END_ENTITY
+
+
+MainLoop:
+
+	fetch unit controlUnit @sharded 0 @nova
+
+	wait 1e-4
+	op sub dt @second oldTime
+	set oldTime @second
+
+	mac ComputeScreen controlUnit
+
+	read playerX PLAYER_DATA DATA_X
+	read playerY PLAYER_DATA DATA_Y
+	read playerZ PLAYER_DATA DATA_Z
+	read playerRot PLAYER_DATA DATA_ROT
+
+	read playerOffsetX PLAYER_DATA DATA_SCREENSHAKE_OFFSET_X
+    read playerOffsetY PLAYER_DATA DATA_SCREENSHAKE_OFFSET_Y
+    read playerOffsetZ PLAYER_DATA DATA_SCREENSHAKE_OFFSET_Z
+    op add playerX playerX playerOffsetX
+    op add playerY playerY playerOffsetY
+    op add playerZ playerZ playerOffsetZ
+
+	op cos playerDirX playerRot
+	op sin playerDirY playerRot
+	op div playerPlaneX playerDirY -DISPLAY_FOV
+	op div playerPlaneY playerDirX DISPLAY_FOV
+
+	set entityID START_ENTITY
+	EntityLoop:
+		read entityType ENTITY_TYPE entityID
+		op mul markerID entityID 2
+		op add markerID markerID 5000
+		op add markerID2 markerID 1
+		jump NoRender equal entityType 0
+		mac CheckEnabled entityID
+
+		read entityX ENTITY_X entityID
+		read entityY ENTITY_Y entityID
+
+		op sub entityModX entityX playerX
+		op sub entityModY entityY playerY
+
+		op mul invDet1 playerPlaneX playerDirY
+		op mul invDet2 playerDirX playerPlaneY
+		op sub invDet invDet1 invDet2
+		op div invDet 1 invDet
+
+		op mul transformX1 playerDirY entityModX
+		op mul transformX2 playerDirX entityModY
+		op sub transformX transformX1 transformX2
+		op mul transformX transformX invDet
+
+		op mul transformY1 playerPlaneX entityModY
+		op mul transformY2 playerPlaneY entityModX
+		op sub transformY transformY1 transformY2
+		op mul transformY transformY invDet
+
+		op div entityScreenX transformX transformY
+		op add entityScreenX 1 entityScreenX
+		op mul entityScreenX entityScreenX displayWidthHalf
+		op add entityScreenX entityScreenX displayX
+
+		op div spriteHeight displayWidth transformY
+		op abs spriteHeight spriteHeight
+		op mul spriteHeight spriteHeight FOV
+
+		op mul entityScreenY playerZ spriteHeight
+		op add entityScreenY entityScreenY displayCenterY
+
+		op mul dist transformY -1
+		op div dist dist 100
+		op add dist dist 121
+		setmarker drawLayer markerID dist 
+		setmarker drawLayer markerID2 dist
+
+		op greaterThan shouldRender transformY 0
+		op notEqual shouldRender2 displayWidth 0
+		op and shouldRender shouldRender shouldRender2
+
+		if equal DEBUG true
+			effect trail entityX entityY 1 %ffff00
+		endif
+
+		op add @counter @counter entityType
+
+		jump NoRender always # shouldn't run, but it's fine
+		jump B_PBullet always
+		jump B_PBulletFire always
+		jump B_PBulletEnergy always
+		jump B_PBulletRocket always
+		jump B_PBulletEnergyBig always
+		jump B_PBulletEnergyFrag always
+		jump B_PExplosionRocket always
+		jump B_PExplosionEnergyBig always
+
+		NoRender:
+			setmarker textureSize markerID 0.01 0.01
+			setmarker pos markerID 0 0
+		EntityOneMarkerExit:
+			setmarker textureSize markerID2 0.01 0.01
+			setmarker pos markerID2 0 0
+		EntityTwoMarkerExit:
+	op add entityID entityID 1
+	jump EntityLoop lessThan entityID END_ENTITY
+jump MainLoop always
+
+import "entities/bullets/player/bullet.sfmlog"
+import "entities/bullets/player/bullet_fire.sfmlog"
+import "entities/bullets/player/bullet_energy.sfmlog"
+import "entities/bullets/player/bullet_rocket.sfmlog"
+import "entities/bullets/player/bullet_energy_big.sfmlog"
+import "entities/bullets/player/bullet_energy_frag.sfmlog"
+
+import "entities/bullets/player/explosion_rocket.sfmlog"
+import "entities/bullets/player/explosion_energy_big.sfmlog"
+
+defmac Distance out x1 y1 x2 y2
+	op sub x x1 x2
+	op sub y y1 y2
+	op len out x y 
+endmac
+
+defmac Angle out x1 y1 x2 y2
+	op sub x x2 x1
+	op sub y y2 y1
+	op angle out x y 
+endmac
+
+defmac Sign out a
+	op abs abs a
+	op div out a abs
+endmac
+
+defmac CheckEnabled id
+	read index ENTITY_ENABLE id
+	read enable TRIGGER_MEMORY index
+	jump $NoRender equal enable false
+endmac
+
+defmac RealGetblock out x y
+	op sub cx x 0.5
+	op sub cy y 0.5
+	getblock block out cx cy
+endmac
+
+defmac MakeEntity type x y enable health data1 data2 data3 data4 data5
+	set i -1
+	Loop:
+		op add i i 1
+		read storedType ENTITY_TYPE i
+		jump BreakLoop greaterThanEq i 480
+	jump Loop notEqual storedType 0
+	write type ENTITY_TYPE i
+	write x ENTITY_X i
+	write y ENTITY_Y i
+	write enable ENTITY_ENABLE i
+	if notEqual health null
+		write health ENTITY_HEALTH i
+	endif
+	if notEqual data1 null
+		write data1 ENTITY_CUSTOM_DATA1 i
+	endif
+	if notEqual data2 null
+		write data2 ENTITY_CUSTOM_DATA2 i
+	endif
+	if notEqual data3 null
+		write data3 ENTITY_CUSTOM_DATA3 i
+	endif
+	if notEqual data4 null
+		write data4 ENTITY_CUSTOM_DATA4 i
+	endif
+	if notEqual data5 null
+		write data5 ENTITY_CUSTOM_DATA5 i
+	endif
+	BreakLoop:
+endmac
+
+defmac MakePlayerBullet type x y dx dy damage size health data5 #gets evaluated for collisions with enemies
+	set i 479
+	Loop:
+		op add i i 1
+		read storedType ENTITY_TYPE i
+		jump BreakLoop greaterThanEq i 512
+	jump Loop notEqual storedType 0
+	write type ENTITY_TYPE i
+	write x ENTITY_X i
+	write y ENTITY_Y i
+	write true ENTITY_ENABLE i
+	write dx ENTITY_CUSTOM_DATA1 i
+	write dy ENTITY_CUSTOM_DATA2 i
+	write damage ENTITY_CUSTOM_DATA3 i
+	write size ENTITY_CUSTOM_DATA4 i
+	if notEqual health null
+		write health ENTITY_HEALTH i
+	endif
+	if equal health null
+		write 0 ENTITY_HEALTH i
+	endif
+	if notEqual data5 null
+		write data5 ENTITY_CUSTOM_DATA5 i
+	endif
+	BreakLoop:
+endmac

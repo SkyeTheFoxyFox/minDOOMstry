@@ -1,0 +1,50 @@
+import constants.sfmlog
+
+setrate 1000
+NoBlocks:
+jump NoBlocks equal TRIGGER_DATA4 null
+ClearLoop:
+	write 0 TRIGGER_TYPE i
+	write 0 TRIGGER_MEMORY i
+	op add i i 1
+jump ClearLoop lessThan i 512
+pset triggerID 0
+
+write false TRIGGER_MEMORY false
+write true TRIGGER_MEMORY true
+
+mac AddTrigger TRIGGER_E_RADIUS 2 87 132 3
+mac AddTrigger TRIGGER_L_LATCH 3 2
+
+mac AddTrigger TRIGGER_A_CLEAR_WALL 4 81 116
+mac AddTrigger TRIGGER_A_CLEAR_WALL 4 82 116
+mac AddTrigger TRIGGER_A_CLEAR_WALL 4 83 116
+
+mac AddTrigger TRIGGER_E_RADIUS 5 72.5 106.5 1.5
+mac AddTrigger TRIGGER_A_TELEPORT_PLAYER 5 92.5 100.5 270
+
+mac AddTrigger TRIGGER_E_RADIUS 6 88.5 100.5 1.5
+mac AddTrigger TRIGGER_A_TELEPORT_PLAYER 6 68.5 106.5 90
+
+stop
+
+defmac AddTrigger type index data1 data2 data3 data4
+	write type TRIGGER_TYPE $triggerID
+	write index TRIGGER_INDEX $triggerID
+
+	if notEqual data1 null
+		write data1 TRIGGER_DATA1 $triggerID
+	endif
+	if notEqual data2 null
+		write data2 TRIGGER_DATA2 $triggerID
+	endif
+	if notEqual data3 null
+		write data3 TRIGGER_DATA3 $triggerID
+	endif
+	if notEqual data4 null
+		write data4 TRIGGER_DATA4 $triggerID
+	endif
+
+	pop add $triggerID $triggerID 1
+endmac
+

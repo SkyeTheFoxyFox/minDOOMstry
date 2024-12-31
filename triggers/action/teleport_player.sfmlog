@@ -1,0 +1,11 @@
+A_TeleportPlayer:
+    read index TRIGGER_INDEX triggerID
+    read state TRIGGER_MEMORY index
+    jump ExitTrigger equal state false
+    read playerX TRIGGER_DATA1 triggerID
+    read playerY TRIGGER_DATA2 triggerID
+    read playerRot TRIGGER_DATA3 triggerID
+    write playerX PLAYER_DATA DATA_X
+    write playerY PLAYER_DATA DATA_Y
+    write playerRot PLAYER_DATA DATA_ROT
+jump ExitTrigger always

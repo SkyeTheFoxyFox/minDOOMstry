@@ -1,0 +1,43 @@
+set name "minDOOMstry"
+set description "An fps"
+set compiler "python /home/skye/code/python/mindustry/sfmlog3/main.py -src {file} -stdout"
+
+block memory-cell cell1
+
+#entity struct array
+block memory-bank entityType
+block memory-bank entityEnable
+block memory-bank entityX 
+block memory-bank entityY
+block memory-bank entityHealth
+block memory-bank entityData1
+block memory-bank entityData2
+block memory-bank entityData3
+block memory-bank entityData4
+block memory-bank entityData5
+block memory-bank entityData6
+
+block memory-bank triggerMemory
+block memory-bank triggerType
+block memory-bank triggerIndex
+block memory-bank triggerData1
+block memory-bank triggerData2
+block memory-bank triggerData3
+block memory-bank triggerData4
+
+proc "init.sfmlog"
+proc "input.sfmlog"
+proc "weapons.sfmlog"
+proc "ui.sfmlog"
+proc "screenshake.sfmlog"
+proc "setup_default_entities.sfmlog"
+proc "setup_triggers.sfmlog"
+repeatproc "raycast.sfmlog" 100
+repeatproc "entity.sfmlog" 16
+repeatproc "enemy.sfmlog" 44
+repeatproc "player_bullet.sfmlog" 4
+repeatproc "trigger.sfmlog" 32
+proc "floor_init.sfmlog"
+repeatproc "floor.sfmlog" 512
+proc "floor_clean.sfmlog"
+

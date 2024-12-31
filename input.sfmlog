@@ -1,0 +1,196 @@
+setrate 1000
+
+const UNIT_POS_X 8
+const UNIT_POS_Y 8
+
+import constants.sfmlog
+import stats.sfmlog
+
+write PLAYER_START_X PLAYER_DATA DATA_X
+write PLAYER_START_Y PLAYER_DATA DATA_Y
+write PLAYER_START_ROT PLAYER_DATA DATA_ROT
+write PLAYER_MAX_HEALTH PLAYER_DATA DATA_HEALTH
+set selectedWeapon 0
+
+set oldTime @second
+Loop:
+	fetch unit controlUnit @sharded 0 @nova
+	wait 1e-4
+	op sub dt @second oldTime
+	set oldTime @second
+
+	read playerX PLAYER_DATA DATA_X
+	read playerY PLAYER_DATA DATA_Y
+	read playerRot PLAYER_DATA DATA_ROT
+	
+	jump IsMobile equal @clientMobile true
+		mac PC_GET_PLAYER_INPUT inputMove inputRotate inputStrafe inputShoot inputSwapWeapon inputBA inputBS inputBD controlUnit
+	jump MobileCheckExit always
+	IsMobile:
+		mac MOBILE_GET_PLAYER_INPUT inputMove inputRotate inputStrafe inputShoot inputSwapWeapon inputBA inputBS inputBD controlUnit
+	MobileCheckExit:
+
+	op mul inputMove inputMove PLAYER_MOVE_SPEED
+	op mul inputStrafe inputStrafe PLAYER_STRAFE_SPEED
+
+	mac 2DRotationMatrix dx dy inputMove inputStrafe playerRot
+	op mul dx dx dt
+	op mul dy dy dt
+	op add newPlayerX playerX dx
+	op add newPlayerY playerY dy
+
+	mac Sign signDX dx
+	mac Sign signDY dy
+
+	op mul checkOffsetX PLAYER_SIZE signDX
+	op mul checkOffsetY PLAYER_SIZE signDY
+
+	op add newPlayerX newPlayerX checkOffsetX
+	op add newPlayerY newPlayerY checkOffsetY
+
+	mac RealGetblock checkBlockX newPlayerX playerY
+	op equal checkBlockX checkBlockX @air
+	op mul dx dx checkBlockX
+
+	mac RealGetblock checkBlockY playerX newPlayerY
+	op equal checkBlockY checkBlockY @air
+	op mul dy dy checkBlockY
+
+	jump FoundBlock notEqual checkBlockX @air
+	jump FoundBlock notEqual checkBlockY @air
+		mac RealGetblock checkBlock newPlayerX newPlayerY
+		jump FoundBlock equal checkBlock @air
+		op abs absDY dy
+		op abs absDX dx
+		jump CornerCondTrue greaterThan absDY absDX
+			set dy 0
+		jump CornerCondExit always
+		CornerCondTrue:
+			set dx 0
+		CornerCondExit:
+	FoundBlock:
+
+	op add playerX playerX dx
+	op add playerY playerY dy
+
+	op mul dr inputRotate PLAYER_ROT_SPEED
+	op mul dr dr dt
+
+	op add playerRot playerRot dr
+
+	jump NoSwapWeapon equal inputSwapWeapon false
+		read selectedWeapon PLAYER_DATA DATA_SELECTED_WEAPON
+		SwapLoop:
+			op add selectedWeapon selectedWeapon 1
+			op mod selectedWeapon selectedWeapon 32
+			op add weaponCheck selectedWeapon 32
+			read hasWeapon PLAYER_DATA weaponCheck
+			jump NoWeapon equal selectedWeapon 0
+		jump SwapLoop equal hasWeapon false
+		NoWeapon:
+		write selectedWeapon PLAYER_DATA DATA_SELECTED_WEAPON
+	NoSwapWeapon:
+
+	setprop @x controlUnit UNIT_POS_X
+	setprop @y controlUnit UNIT_POS_Y
+	setprop @velocityX controlUnit 0
+	setprop @velocityY controlUnit 0
+
+	if equal DEBUG true
+		effect trail playerX playerY
+	endif
+
+	write playerX PLAYER_DATA DATA_X
+	write playerY PLAYER_DATA DATA_Y
+	write playerRot PLAYER_DATA DATA_ROT
+	write inputShoot PLAYER_DATA DATA_SHOOTING
+	write inputBA PLAYER_DATA DATA_A
+	write inputBS PLAYER_DATA DATA_S
+	write inputBD PLAYER_DATA DATA_D
+
+jump Loop always
+
+defmac PC_GET_PLAYER_INPUT inputMove inputRotate inputStrafe inputShoot inputSwapWeapon inputBA inputBS inputBD unit
+	sensor velX unit @velocityX
+	sensor velY unit @velocityY
+	sensor shooting unit @shooting
+	sensor boost unit @boosting
+	jump ModKey equal boost true
+
+	op notEqual inputMove velY 0
+	op abs absVelY velY
+	op div signVelY velY absVelY
+	op mul inputMove inputMove signVelY
+
+	jump NoRotate equal shooting true
+
+	op notEqual inputRotate velX 0
+	op abs absVelX velX
+	op div signVelX velX absVelX
+	op mul inputRotate inputRotate signVelX
+	set inputStrafe 0
+
+	NoRotate:
+	jump NoStrafe equal shooting false
+
+	op notEqual inputStrafe velX 0
+	op abs absVelX velX
+	op div signVelX velX absVelX
+	op mul inputStrafe inputStrafe signVelX
+	set inputRotate 0
+
+	NoStrafe:
+	set inputShoot shooting
+
+	set inputSwapWeapon false
+	set oldBW false
+	set inputBA false
+	set inputBS false
+	set inputBD false
+
+	jump Exit always
+	ModKey:
+	set oldBW inputBW
+	op greaterThan inputBW velY 0 
+	op greaterThan inputSwapWeapon inputBW oldBW
+	op lessThan inputBS velY 0 
+	op greaterThan inputBD velX 0 
+	op lessThan inputBA velX 0 
+
+	set inputRotate 0
+	set inputStrafe 0
+	set inputMove 0
+	set inputShoot 0
+
+	Exit:
+endmac
+
+defmac MOBILE_GET_PLAYER_INPUT inputMove inputRotate inputStrafe inputShoot inputSwapWeapon inputBA inputInteract inputBD unit
+	#inputMove, inputRotate, and inputStrafe should be -1, 0, or 1
+	#inputSwapWeapon and inputInteract should be a single pulse 
+	#inputBA, and BD aren't used currently
+	#unit is the player's unit, you can use it to get whatever info you need from the player
+endmac
+
+defmac Sign out a
+	op abs abs a
+	op div out a abs
+endmac
+
+defmac RealGetblock out x y
+	op sub cx x 0.5
+	op sub cy y 0.5
+	getblock block out cx cy
+endmac
+
+defmac 2DRotationMatrix outX outY inputX inputY angle
+	op cos cosa angle
+	op sin sina angle
+	op mul xcos cosa inputX
+	op mul xsin sina inputX
+	op mul ycos cosa inputY
+	op mul ysin sina inputY
+
+	op sub outX xcos ysin
+	op add outY xsin ycos
+endmac

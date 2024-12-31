@@ -1,0 +1,56 @@
+B_PBulletEnergyBig:
+    #update logic
+    read dx ENTITY_CUSTOM_DATA1 entityID
+    read dy ENTITY_CUSTOM_DATA2 entityID
+
+    op mul dx dx dt
+    op mul dy dy dt
+    op add entityX entityX dx
+    op add entityY entityY dy
+
+    read bulletEnd ENTITY_HEALTH entityID
+    jump B_PBulletEnergyBig_Die equal bulletEnd -1
+
+    mac RealGetblock checkBlock entityX entityY
+    jump B_PBulletEnergyBig_NoCollide equal checkBlock @air
+        B_PBulletEnergyBig_Die:
+        mac PlaySoundWorld @sfx-plasmaboom entityX entityY playerX playerY playerRot 3
+        write ENTITY_B_PEXPLOSION_ENERGY_BIG ENTITY_TYPE entityID
+        write 0 ENTITY_HEALTH entityID
+        write 0 ENTITY_CUSTOM_DATA1 entityID
+        write 0 ENTITY_CUSTOM_DATA2 entityID
+        write W_FORESHADOW_BLAST_DAMAGE ENTITY_CUSTOM_DATA3 entityID
+        write W_FORESHADOW_BLAST_RADIUS ENTITY_CUSTOM_DATA4 entityID
+
+        op sub entityX entityX dx
+        op sub entityY entityY dy
+
+        set spawnLoopIndex 0
+        B_PBulletEnergyFragSpawnLoop:
+            pop div angleIncrement 360 W_FORESHADOW_FRAG_COUNT
+            op mul angle angleIncrement spawnLoopIndex
+            op cos spawnDX angle
+            op sin spawnDY angle
+            op mul spawnDX spawnDX W_FORESHADOW_FRAG_SPEED
+            op mul spawnDY spawnDY W_FORESHADOW_FRAG_SPEED
+
+            mac MakePlayerBullet ENTITY_B_PBULLET_ENERGY_FRAG entityX entityY spawnDX spawnDY W_FORESHADOW_FRAG_DAMAGE W_FORESHADOW_FRAG_SIZE
+
+        op add spawnLoopIndex spawnLoopIndex 1
+        jump B_PBulletEnergyFragSpawnLoop lessThan spawnLoopIndex W_FORESHADOW_FRAG_COUNT
+
+        jump NoRender always
+    B_PBulletEnergyBig_NoCollide:
+    write entityX ENTITY_X entityID
+    write entityY ENTITY_Y entityID
+
+    #render logic
+    jump NoRender equal shouldRender false
+
+
+    setmarker pos markerID entityScreenX entityScreenY
+    setmarker textureSize markerID spriteHeight spriteHeight
+    setmarker color markerID %ffffff
+    setmarker rotation markerID 0
+    setmarker texture markerID false "drill-laser-boost-center"
+jump EntityOneMarkerExit always

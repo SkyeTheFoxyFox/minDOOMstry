@@ -1,0 +1,8 @@
+A_ClearWall:
+    read index TRIGGER_INDEX triggerID
+    read state TRIGGER_MEMORY index
+    jump ExitTrigger equal state false
+    read x TRIGGER_DATA1 triggerID
+    read y TRIGGER_DATA2 triggerID
+    setblock block @air x y
+jump ExitTrigger always

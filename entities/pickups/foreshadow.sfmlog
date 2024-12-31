@@ -1,0 +1,21 @@
+P_Foreshadow:
+    #update logic
+    mac Distance playerDist entityX entityY playerX playerY
+    jump P_Foreshadow_NoPickup greaterThan playerDist 0.5
+        playsound false @sfx-door 1 0.8 0 null null true
+        write ENTITY_NONE ENTITY_TYPE entityID
+        write true PLAYER_DATA DATA_OWNED_FORESHADOW
+        write WEAPON_FORESHADOW PLAYER_DATA DATA_SELECTED_WEAPON
+    P_Foreshadow_NoPickup:
+    #render logic
+    jump NoRender equal shouldRender false
+
+    op div spriteHeightHalf spriteHeight 2
+    op div spriteHeightQuarter spriteHeight 4
+    op sub entityScreenY entityScreenY spriteHeightQuarter
+    setmarker pos markerID entityScreenX entityScreenY
+    setmarker textureSize markerID spriteHeightHalf spriteHeightHalf
+    setmarker color markerID %ffffff
+    setmarker rotation markerID 0
+    setmarker texture markerID false "foreshadow"
+jump EntityOneMarkerExit always

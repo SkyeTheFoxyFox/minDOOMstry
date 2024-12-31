@@ -1,0 +1,14 @@
+E_Cat:
+    #update logic
+
+    mac CheckBulletCollision collided null entityX entityY 0.5
+
+    #render logic
+    jump NoRender equal shouldRender false
+
+    setmarker pos markerID entityScreenX entityScreenY
+    setmarker textureSize markerID spriteHeight spriteHeight
+    setmarker color markerID %ffffff
+    setmarker rotation markerID 0
+    setmarker texture markerID false "cat"
+jump EntityOneMarkerExit always

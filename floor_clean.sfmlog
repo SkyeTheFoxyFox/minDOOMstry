@@ -1,0 +1,11 @@
+setrate 1000
+import constants.sfmlog
+wait 1e-4
+
+read markerCount PLAYER_DATA DATA_FLOOR_COUNTER
+op add markerMax markerCount 250
+Loop:
+	setmarker remove markerCount
+op add markerCount markerCount 1
+jump Loop lessThan markerCount markerMax
+write markerCount PLAYER_DATA DATA_FLOOR_COUNTER

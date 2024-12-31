@@ -1,0 +1,43 @@
+W_Duo:
+    mac SetAmmoType W_DUO_AMMO hasAmmo
+    jump W_Duo_NotShooting notEqual playerShooting true
+        op add testTime lastShootTime W_DUO_SHOOT_DELAY
+        jump W_Duo_NotShooting lessThan @second testTime
+        set lastShootTime @second
+
+        if equal hasAmmo true
+            mac GetAmmo ammo W_DUO_AMMO
+            jump W_Duo_NoAmmo lessThan ammo W_DUO_AMMO_COST
+            op sub ammo ammo W_DUO_AMMO_COST
+            mac SetAmmo ammo W_DUO_AMMO
+        endif
+
+        playsound false @sfx-shoot 0.5 1 0 null null true
+
+        set markerRecoil -0.2
+
+        op cos dx playerRot
+        op sin dy playerRot
+        op mul dx dx W_DUO_SHOT_SPEED
+        op mul dy dy W_DUO_SHOT_SPEED
+
+        mac MakePlayerBullet ENTITY_B_PBULLET playerX playerY dx dy W_DUO_SHOT_DAMAGE W_DUO_SHOT_SIZE
+
+    if equal hasAmmo true
+        jump W_Duo_NotShooting always
+        W_Duo_NoAmmo:
+        playsound false @sfx-noammo 1 1 0 null null true
+    endif
+    
+    W_Duo_NotShooting:
+    op mul markerSize 0.5 displayWidth
+    op mul markerRecoilVel 0.4 dt
+    op add markerRecoil markerRecoil markerRecoilVel
+    op lessThan markerRecoilMult markerRecoil 0
+    op mul markerRecoil markerRecoil markerRecoilMult
+    op mul markerYOffset markerRecoil displayHeight
+    op add markerDrawY displayY markerYOffset
+    setmarker textureSize MARKER_ID markerSize markerSize
+    setmarker texture MARKER_ID false "duo-preview"
+    setmarker pos MARKER_ID displayCenterX markerDrawY
+jump WeaponOneSpriteExit always

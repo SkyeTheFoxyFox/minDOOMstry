@@ -1,0 +1,182 @@
+const DEBUG true #enables debug features
+
+const FOV 1
+
+#player memory
+const PLAYER_DATA cell1
+
+const DATA_X 0
+const DATA_Y 1
+const DATA_Z 2
+const DATA_ROT 3
+const DATA_HEALTH 4
+const DATA_SHOOTING 5
+const DATA_SELECTED_WEAPON 6
+const DATA_ACTIVE_AMMO 7
+const DATA_A 8
+const DATA_S 9
+const DATA_D 10
+
+const DATA_SCREENSHAKE_OFFSET_X 23
+const DATA_SCREENSHAKE_OFFSET_Y 24
+const DATA_SCREENSHAKE_OFFSET_Z 25
+const DATA_SCREENSHAKE_MAGNITUDE 26
+const DATA_SCREENSHAKE_START 27
+const DATA_SCREENSHAKE_END 28
+
+const DATA_FLOOR_COUNTER 29
+
+const DATA_AMMO_COPPER 30
+const DATA_AMMO_BLAST 31
+const DATA_AMMO_SURGE 32
+
+const DATA_OWNED_DUO 33
+const DATA_OWNED_SCORCH 34
+const DATA_OWNED_SEGMENT 35
+const DATA_OWNED_SALVO 36
+const DATA_OWNED_MELTDOWN 37
+const DATA_OWNED_RIPPLE 38
+const DATA_OWNED_FORESHADOW 39
+
+enum
+	AMMO_NONE
+	AMMO_COPPER
+	AMMO_BLAST
+	AMMO_SURGE
+endenum
+
+#weapon IDs
+enum
+	WEAPON_FIST
+	WEAPON_DUO
+	WEAPON_SCORCH
+	WEAPON_SEGMENT
+	WEAPON_SALVO
+	WEAPON_MELTDOWN
+	WEAPON_RIPPLE
+	WEAPON_FORESHADOW
+endenum
+
+#entity memory
+const ENTITY_TYPE bank1
+const ENTITY_ENABLE bank2
+const ENTITY_X bank3
+const ENTITY_Y bank4
+const ENTITY_HEALTH bank5
+const ENTITY_CUSTOM_DATA1 bank6
+const ENTITY_CUSTOM_DATA2 bank7
+const ENTITY_CUSTOM_DATA3 bank8
+const ENTITY_CUSTOM_DATA4 bank9
+const ENTITY_CUSTOM_DATA5 bank10
+const ENTITY_CUSTOM_DATA6 bank11
+
+#entity IDs
+enum
+	ENTITY_NONE
+
+	ENTITY_P_COPPER
+	ENTITY_P_BLAST
+	ENTITY_P_SURGE
+
+	ENTITY_P_DUO
+	ENTITY_P_SCORCH
+	ENTITY_P_SEGMENT
+	ENTITY_P_SALVO
+	ENTITY_P_FORESHADOW
+	ENTITY_P_RIPPLE
+	ENTITY_P_MELTDOWN
+
+	ENTITY_B_BULLET
+
+	ENTITY_I_SWITCH
+endenum
+
+#enemy IDs
+enum
+	ENTITY_NONE
+	ENTITY_E_DAGGER
+	ENTITY_E_CAT
+endenum
+
+#player bullet IDs
+enum
+	ENTITY_NONE
+	ENTITY_B_PBULLET
+	ENTITY_B_PBULLET_FIRE
+	ENTITY_B_PBULLET_ENERGY
+	ENTITY_B_PBULLET_ROCKET
+	ENTITY_B_PBULLET_ENERGY_BIG
+	ENTITY_B_PBULLET_ENERGY_FRAG
+
+	ENTITY_B_PEXPLOSION_ROCKET
+	ENTITY_B_PEXPLOSION_ENERGY_BIG
+endenum
+
+#trigger memory
+const TRIGGER_MEMORY bank12
+const TRIGGER_TYPE bank13
+const TRIGGER_INDEX bank14
+const TRIGGER_DATA1 bank15
+const TRIGGER_DATA2 bank16
+const TRIGGER_DATA3 bank17
+const TRIGGER_DATA4 bank18
+
+#trigger IDs
+enum
+	TRIGGER_NONE
+
+	TRIGGER_L_COPY
+	TRIGGER_L_NOT
+	TRIGGER_L_AND
+	TRIGGER_L_OR
+	TRIGGER_L_XOR
+	TRIGGER_L_DELAY
+	TRIGGER_L_TOGGLE
+	TRIGGER_L_LATCH
+
+	TRIGGER_E_RADIUS
+	TRIGGER_A_CLEAR_WALL 
+	TRIGGER_A_TELEPORT_PLAYER 
+endenum
+
+defmac PlaySoundWorld sfx x y playerX playerY playerRot volume flip
+	op cos dirX playerRot
+	op sin dirY playerRot
+	op sub targetDX playerX x
+	op sub targetDY playerY y
+	op len dist targetDX targetDY
+	op mul offset volume 2
+	op add dist dist volume
+	op div volume offset dist
+	op div targetDirX targetDX dist
+	op div targetDirY targetDY dist
+	mac 2dDotProduct pan targetDirX targetDirY dirY dirX
+	if equal flip true
+		op mul pan pan -1 
+	endif
+	playsound false sfx volume 1 pan null null true
+endmac
+
+defmac 2dDotProduct out x1 y1 x2 y2
+	op mul v1 x1 x2
+	op mul v2 y1 y2
+	op add out v1 v2
+endmac
+
+defmac ComputeScreen controlUnit
+	sensor $displayWidth controlUnit @cameraWidth
+	sensor $displayHeight controlUnit @cameraHeight
+	sensor $displayCenterX controlUnit @cameraX
+	sensor $displayCenterY controlUnit @cameraY
+	op div $displayWidthHalf $displayWidth 2
+	op div $displayHeightHalf $displayHeight 2
+	op sub $displayY $displayCenterY $displayHeightHalf
+	op sub $displayX $displayCenterX $displayWidthHalf
+endmac
+
+defmac Screenshake magnitude duration
+	write magnitude PLAYER_DATA DATA_SCREENSHAKE_MAGNITUDE
+	op add end @second duration
+	write end PLAYER_DATA DATA_SCREENSHAKE_END
+	write @second PLAYER_DATA DATA_SCREENSHAKE_START
+endmac

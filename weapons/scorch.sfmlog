@@ -1,0 +1,40 @@
+W_Scorch:
+    mac SetAmmoType W_SCORCH_AMMO hasAmmo
+    jump W_Scorch_NotShooting notEqual playerShooting true
+        op add testTime lastShootTime W_SCORCH_SHOOT_DELAY
+        jump W_Scorch_NotShooting lessThan @second testTime
+        set lastShootTime @second
+        if equal hasAmmo true
+            mac GetAmmo ammo W_SCORCH_AMMO
+            jump W_Scorch_NoAmmo lessThan ammo W_SCORCH_AMMO_COST
+            op sub ammo ammo W_SCORCH_AMMO_COST
+            mac SetAmmo ammo W_SCORCH_AMMO
+        endif
+
+        playsound false @sfx-flame 0.5 1 0 null null true
+
+        op cos dx playerRot
+        op sin dy playerRot
+        op mul dx dx W_SCORCH_SHOT_SPEED
+        op mul dy dy W_SCORCH_SHOT_SPEED
+
+        op add bulletDieTime @second W_SCORCH_SHOT_LIFE
+        op rand animOffset 40
+        op floor animOffset animOffset
+
+        mac MakePlayerBullet ENTITY_B_PBULLET_FIRE playerX playerY dx dy W_SCORCH_SHOT_DAMAGE W_SCORCH_SHOT_SIZE bulletDieTime animOffset
+
+    if equal hasAmmo true
+        jump W_Scorch_NotShooting always
+        W_Scorch_NoAmmo:
+        playsound false @sfx-noammo 1 1 0 null null true
+    endif
+
+    W_Scorch_NotShooting:
+    op mul markerSize 0.5 displayWidth
+    op mul markerYOffset -0.1 displayHeight
+    op add markerY displayY markerYOffset
+    setmarker textureSize MARKER_ID markerSize markerSize
+    setmarker texture MARKER_ID false "scorch"
+    setmarker pos MARKER_ID displayCenterX markerY
+jump WeaponOneSpriteExit always

@@ -1,0 +1,77 @@
+W_Foreshadow:
+    mac SetAmmoType W_FORESHADOW_AMMO hasAmmo
+    jump W_Foreshadow_HasShot greaterThan foreshadowCheckTime 0
+    jump W_Foreshadow_NotShooting notEqual playerShooting true
+        op add testTime lastShootTime W_FORESHADOW_SHOOT_DELAY
+        jump W_Foreshadow_NotShooting lessThan @second testTime
+        if equal hasAmmo true
+            mac GetAmmo ammo W_FORESHADOW_AMMO
+            jump W_Foreshadow_NoAmmo lessThan ammo W_FORESHADOW_AMMO_COST
+        endif
+
+        jump W_Foreshadow_HasShot equal hasShot true
+        set hasShot true
+        playsound false @sfx-lasercharge 1 1 0 @thisx @thisy true
+        set savedShootTime @second
+        W_Foreshadow_HasShot:
+
+        op add testTime savedShootTime 1.65
+        op sub foreshadowCheckTime testTime @second
+        op div motionTime foreshadowCheckTime 1.65
+        op sub invMotionTime motionTime 1
+        op abs invMotionTime invMotionTime
+        op mul colorFade invMotionTime 0.75
+
+        op mul markerWidth 0.148 displayWidth
+        op mul markerHeight 0.4625 displayWidth
+        op mul markerDrawY displayHeight 0
+        op add markerDrawY displayY markerDrawY
+        setmarker textureSize MARKER_ID_2 markerWidth markerHeight
+        setmarker texture MARKER_ID_2 false "foreshadow-heat"
+        packcolor foreshadowCol 0.549 0.694 0.949 colorFade
+        setmarker pos MARKER_ID_2 displayCenterX markerDrawY
+        setmarker color MARKER_ID_2 foreshadowCol
+        
+        jump W_Foreshadow_NotShooting greaterThan foreshadowCheckTime 0
+        playsound false @sfx-pulseBlast 1 1 0 @thisx @thisy true
+
+        set hasShot false
+        read playerX PLAYER_DATA DATA_X
+        read playerY PLAYER_DATA DATA_Y
+        read playerRot PLAYER_DATA DATA_ROT
+
+        set lastShootTime @second
+
+        if equal hasAmmo true
+            mac GetAmmo ammo W_FORESHADOW_AMMO
+            jump W_Foreshadow_NoAmmo lessThan ammo W_FORESHADOW_AMMO_COST
+            op sub ammo ammo W_FORESHADOW_AMMO_COST
+            mac SetAmmo ammo W_FORESHADOW_AMMO
+        endif
+
+        playsound false @sfx-shoot 0.5 1 0 null null true
+
+        op cos dx playerRot
+        op sin dy playerRot
+        op mul dx dx W_FORESHADOW_SHOT_SPEED
+        op mul dy dy W_FORESHADOW_SHOT_SPEED
+
+        mac MakePlayerBullet ENTITY_B_PBULLET_ENERGY_BIG playerX playerY dx dy W_FORESHADOW_SHOT_DAMAGE W_FORESHADOW_SHOT_SIZE
+
+    mac Screenshake 0.1 0.5
+
+    if equal hasAmmo true
+        jump W_Foreshadow_NotShooting always
+        W_Foreshadow_NoAmmo:
+        set lastShootTime @second
+        playsound false @sfx-noammo 1 1 0 null null true
+    endif
+    
+    W_Foreshadow_NotShooting:
+    op mul markerSize 0.5 displayWidth
+    op add markerDrawY displayY 0
+    setmarker textureSize MARKER_ID markerSize markerSize
+    setmarker texture MARKER_ID false "foreshadow"
+    setmarker pos MARKER_ID displayCenterX markerDrawY
+    jump WeaponTwoSpriteExit greaterThan foreshadowCheckTime 0
+jump WeaponOneSpriteExit always

@@ -1,0 +1,45 @@
+E_Dagger:
+    #update logic
+
+    mac Angle facingAngle entityX entityY playerX playerY
+    op cos entityDX facingAngle
+    op sin entityDY facingAngle
+    op mul entityDX entityDX E_DAGGER_SPEED
+    op mul entityDY entityDY E_DAGGER_SPEED
+    op mul entityDX entityDX dt
+    op mul entityDY entityDY dt
+    set entitySize E_DAGGER_SIZE
+    op add Func_CollidingUpdate_return @counter 1
+    jump Func_CollidingUpdate always
+
+    read entityHealth ENTITY_HEALTH entityID
+    mac CheckBulletCollision collided entityHealth entityX entityY E_DAGGER_SIZE
+    mac Die entityHealth entityID
+    write entityHealth ENTITY_HEALTH entityID
+
+    read shootTime ENTITY_CUSTOM_DATA1 entityID
+    jump E_Dagger_NoShoot greaterThan shootTime @second
+        mac PlaySoundWorld @sfx-pew entityX entityY playerX playerY playerRot 1
+        op cos bulletDX facingAngle
+        op sin bulletDY facingAngle
+        op mul bulletDX bulletDX E_DAGGER_SHOT_SPEED
+        op mul bulletDY bulletDY E_DAGGER_SHOT_SPEED
+        mac MakeEntity ENTITY_B_BULLET entityX entityY true null bulletDX bulletDY E_DAGGER_BULLET_DAMAGE
+        op add shootTime @second E_DAGGER_SHOOT_DELAY
+        write shootTime ENTITY_CUSTOM_DATA1 entityID
+    E_Dagger_NoShoot:
+
+    #render logic
+    jump NoRender equal shouldRender false
+
+    setmarker pos markerID entityScreenX entityScreenY
+    setmarker textureSize markerID spriteHeight spriteHeight
+    jump E_Dagger_Hit equal collided true
+    setmarker color markerID %ffffff
+    jump E_Dagger_ColorExit always
+    E_Dagger_Hit:
+    setmarker color markerID %ff0000
+    E_Dagger_ColorExit:
+    setmarker rotation markerID 0
+    setmarker texture markerID false "unit-dagger-full"
+jump EntityOneMarkerExit always

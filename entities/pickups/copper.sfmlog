@@ -1,0 +1,23 @@
+P_Copper:
+    #update logic
+    mac Distance playerDist entityX entityY playerX playerY
+    jump P_Copper_NoPickup greaterThan playerDist 0.5
+        playsound false @sfx-spark 1 8 0 null null true
+        read quantity ENTITY_CUSTOM_DATA1 entityID
+        read ammo PLAYER_DATA DATA_AMMO_COPPER
+        op add ammo ammo quantity
+        write ammo PLAYER_DATA DATA_AMMO_COPPER
+        write ENTITY_NONE ENTITY_TYPE entityID
+    P_Copper_NoPickup:
+    #render logic
+    jump NoRender equal shouldRender false
+
+    op div spriteHeightHalf spriteHeight 2
+    op div spriteHeightQuarter spriteHeight 4
+    op sub entityScreenY entityScreenY spriteHeightQuarter
+    setmarker pos markerID entityScreenX entityScreenY
+    setmarker textureSize markerID spriteHeightHalf spriteHeightHalf
+    setmarker color markerID %ffffff
+    setmarker rotation markerID 0
+    setmarker texture markerID false "item-copper"
+jump EntityOneMarkerExit always

@@ -1,0 +1,98 @@
+setrate 1000
+
+import constants.sfmlog
+
+pop mul DISPLAY_FOV FOV 2
+pop mul -DISPLAY_FOV DISPLAY_FOV -1
+pop mul HALF_FOV FOV 0.5
+
+setmarker remove 10000 
+makemarker quad 10000 0 0 false
+setmarker colori 10000 0 %a3e8ff
+setmarker colori 10000 1 %a3e8ff
+setmarker colori 10000 2 %69c3ff
+setmarker colori 10000 3 %69c3ff
+
+setmarker drawLayer 10000 120
+
+#setmarker remove 10001 
+#makemarker quad 10001 0 0 false
+#setmarker texture 10001 false "sprites/clouds.png"
+#setmarker uvi 10001 0 0 0
+#setmarker uvi 10001 1 1 0
+#setmarker uvi 10001 2 1 1
+#setmarker uvi 10001 3 0 1
+#setmarker drawLayer 10001 120.001
+
+setmarker remove 10002
+makemarker quad 10002 0 0 false
+setmarker color 10002 %000000
+setmarker minimap 10002 true
+setmarker world 10002 false
+setmarker posi 10002 0 0 0
+setmarker posi 10002 1 @mapw 0
+setmarker posi 10002 2 @mapw @maph
+setmarker posi 10002 3 0 @maph
+
+fetch unit controlUnit @sharded 0 @nova
+jump NoSpawn notEqual controlUnit null
+	spawn @nova 0 0 0 @sharded controlUnit
+NoSpawn:
+status false disarmed controlUnit 1000000
+
+Loop:
+	mac ComputeScreen controlUnit
+
+	op add displayXRight displayX displayWidth
+	op add displayYTop displayY displayHeight
+
+	setmarker posi 10000 0 displayX displayCenterY
+	setmarker posi 10000 1 displayXRight displayCenterY
+	setmarker posi 10000 2 displayXRight displayYTop
+	setmarker posi 10000 3 displayX displayYTop
+
+	#read playerRot PLAYER_DATA DATA_ROT
+
+	#op cos playerDirX playerRot
+	#op sin playerDirY playerRot
+	#op div playerPlaneX playerDirY -DISPLAY_FOV
+	#op div playerPlaneY playerDirX DISPLAY_FOV
+
+	#op mul invDet1 playerPlaneX playerDirY
+	#op mul invDet2 playerDirX playerPlaneY
+	#op sub invDet invDet1 invDet2
+	#op div invDet 1 invDet
+
+	#mac VertexComp drawX0 drawY0 10 10
+	#mac VertexComp drawX1 drawY1 10 -10
+	#mac VertexComp drawX2 drawY2 -10 -10
+	#mac VertexComp drawX3 drawY3 -10 10
+
+	#setmarker posi 10001 0 drawX0 drawY0
+	#setmarker posi 10001 1 drawX1 drawY1
+	#setmarker posi 10001 2 drawX2 drawY2
+	#setmarker posi 10001 3 drawX3 drawY3
+jump Loop always
+
+defmac VertexComp drawX drawY pointX pointY		
+	op mul transformX1 $playerDirY pointX
+	op mul transformX2 $playerDirX pointY
+	op sub transformX transformX1 transformX2
+	op mul transformX transformX $invDet
+
+	op mul transformY1 $playerPlaneX pointX
+	op mul transformY2 $playerPlaneY pointY
+	op sub transformY transformY1 transformY2
+	op mul transformY transformY $invDet
+	op max transformY transformY 0
+
+	op div floorScreenX transformX transformY
+	op add floorScreenX 1 floorScreenX
+	op mul floorScreenX floorScreenX $displayWidthHalf
+	op add drawX floorScreenX $displayX
+
+	op div floorHeight $displayHeight transformY
+	op abs floorHeight floorHeight
+	op mul floorHeight floorHeight $HALF_FOV
+	op add drawY $displayCenterY floorHeight
+endmac

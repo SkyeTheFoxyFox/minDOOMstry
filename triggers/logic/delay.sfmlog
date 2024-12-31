@@ -1,0 +1,20 @@
+L_Delay:
+    read outIndex TRIGGER_INDEX triggerID
+    read index TRIGGER_DATA1 triggerID
+    read delay TRIGGER_DATA2 triggerID
+    read triggerTime TRIGGER_DATA3 triggerID
+    read state TRIGGER_MEMORY index
+    read outState TRIGGER_MEMORY outIndex
+    jump ExitTrigger lessThan @second triggerTime
+    jump ExitTrigger equal state outState
+    read delayEnd TRIGGER_DATA4 triggerID
+    jump L_Delay_NoDelay equal delayEnd true
+        write true TRIGGER_DATA4 triggerID
+        op add triggerTime @second delay
+        write triggerTime TRIGGER_DATA3 triggerID
+    jump ExitTrigger always
+    L_Delay_NoDelay:
+        write false TRIGGER_DATA4 triggerID
+        write state TRIGGER_MEMORY outIndex
+        jump ExitTrigger equal state outState
+jump ExitTrigger always

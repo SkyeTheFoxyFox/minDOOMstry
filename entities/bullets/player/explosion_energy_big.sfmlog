@@ -1,0 +1,35 @@
+B_PExplosionEnergyBig:
+    #update logic
+    read timer ENTITY_CUSTOM_DATA1 entityID
+    op add timer timer dt
+    write timer ENTITY_CUSTOM_DATA1 entityID
+
+    read bulletEnd ENTITY_HEALTH entityID
+    jump B_PExplosionEnergyBig_NotCollided notEqual bulletEnd -1
+        write -2 ENTITY_HEALTH entityID
+    B_PExplosionEnergyBig_NotCollided:
+    jump B_PExplosionEnergyBig_NoDie lessThan timer 1
+        write ENTITY_NONE ENTITY_TYPE entityID
+        jump NoRender always
+    B_PExplosionEnergyBig_NoDie:
+
+    #render logic
+    jump NoRender equal shouldRender false
+
+    op sub spriteSizeMod timer 1
+    op abs spriteSizeMod spriteSizeMod
+
+    op mul spriteHeight spriteHeight spriteSizeMod
+    op mul spriteHeight2 spriteHeight 2
+
+    setmarker pos markerID entityScreenX entityScreenY
+    setmarker textureSize markerID spriteHeight2 spriteHeight2
+    setmarker color markerID %8cb1f2
+    setmarker rotation markerID 0
+    setmarker texture markerID false "particle"
+    setmarker pos markerID2 entityScreenX entityScreenY
+    setmarker textureSize markerID2 spriteHeight2 spriteHeight2
+    setmarker color markerID2 %ffffff
+    setmarker rotation markerID2 0
+    setmarker texture markerID2 false "drill-laser-boost-center"
+jump EntityTwoMarkerExit always

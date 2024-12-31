@@ -1,0 +1,34 @@
+B_Bullet:
+    #update logic
+    read dx ENTITY_CUSTOM_DATA1 entityID
+    read dy ENTITY_CUSTOM_DATA2 entityID
+    op mul dx dx dt
+    op mul dy dy dt
+    op add entityX entityX dx
+    op add entityY entityY dy
+    mac RealGetblock checkBlock entityX entityY
+    jump B_Bullet_NoCollide equal checkBlock @air
+        write 0 ENTITY_TYPE entityID
+        jump NoRender always
+    B_Bullet_NoCollide:
+    write entityX ENTITY_X entityID
+    write entityY ENTITY_Y entityID
+
+    read damage ENTITY_CUSTOM_DATA3 entityID
+
+    mac CheckPlayerCollision entityID damage entityX entityY playerX playerY
+
+    #render logic
+    jump NoRender equal shouldRender false
+
+    op div spriteHeightQuarter spriteHeight 4
+    op sub entityScreenY entityScreenY spriteHeightQuarter
+
+    op div bulletHeight spriteHeight 2
+
+    setmarker pos markerID entityScreenX entityScreenY
+    setmarker textureSize markerID bulletHeight bulletHeight
+    setmarker color markerID %ffffff
+    setmarker rotation markerID 0
+    setmarker texture markerID false "bullet"
+jump EntityOneMarkerExit always

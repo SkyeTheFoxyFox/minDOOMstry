@@ -1,0 +1,42 @@
+B_PExplosionRocket:
+    #update logic
+    read timer ENTITY_CUSTOM_DATA1 entityID
+    op add timer timer dt
+    write timer ENTITY_CUSTOM_DATA1 entityID
+
+    read bulletEnd ENTITY_HEALTH entityID
+    jump B_PExplosionRocket_NotCollided notEqual bulletEnd -1
+        write -2 ENTITY_HEALTH entityID
+    B_PExplosionRocket_NotCollided:
+    jump B_PExplosionRocket_NoDie lessThan timer 1
+        write ENTITY_NONE ENTITY_TYPE entityID
+        jump NoRender always
+    B_PExplosionRocket_NoDie:
+
+    #render logic
+    jump NoRender equal shouldRender false
+
+    op sub spriteSizeMod timer 1
+    op abs spriteSizeMod spriteSizeMod
+    op div spriteSizeMod spriteSizeMod 2
+    op add spriteSizeMod spriteSizeMod 0.5
+
+    op sub spriteColorMod timer 1
+    op abs spriteColorMod spriteColorMod
+
+    op mul spriteHeight spriteHeight spriteSizeMod
+    op mul spriteHeight2 spriteHeight 1.5
+
+    setmarker pos markerID entityScreenX entityScreenY
+    setmarker textureSize markerID spriteHeight2 spriteHeight2
+    packcolor markerColor 1 0.349 0 spriteColorMod
+    setmarker color markerID markerColor
+    setmarker rotation markerID 25
+    setmarker texture markerID false "crystal-blocks1"
+    setmarker pos markerID2 entityScreenX entityScreenY
+    setmarker textureSize markerID2 spriteHeight spriteHeight
+    packcolor markerColor 1 0.957 0 spriteColorMod
+    setmarker color markerID2 markerColor
+    setmarker rotation markerID2 0
+    setmarker texture markerID2 false "crystal-blocks1"
+jump EntityTwoMarkerExit always

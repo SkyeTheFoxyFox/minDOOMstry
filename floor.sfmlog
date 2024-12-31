@@ -1,0 +1,184 @@
+const PROC_ID {iteration}
+const PROC_COUNT {iteration_count}
+
+const RENDER_DISTANCE 75
+
+import constants.sfmlog
+
+pop mul DISPLAY_FOV FOV 2
+pop mul -DISPLAY_FOV DISPLAY_FOV -1
+
+pop pow TOTAL_TILE_COUNT RENDER_DISTANCE 2
+pop div TILES_PER_PROC TOTAL_TILE_COUNT PROC_COUNT
+pop mul START_TILE TILES_PER_PROC PROC_ID
+pop add END_TILE START_TILE TILES_PER_PROC
+pop div HALF_RENDER_DISTANCE RENDER_DISTANCE 2
+
+pop mul HALF_FOV FOV 0.5
+
+setrate 1000
+
+Loop:
+	fetch unit controlUnit @sharded 0 @nova
+
+	wait 1e-4
+
+	mac ComputeScreen controlUnit
+
+	read playerX PLAYER_DATA DATA_X
+	read playerY PLAYER_DATA DATA_Y
+	read playerZ PLAYER_DATA DATA_Z
+	read playerRot PLAYER_DATA DATA_ROT
+
+	read playerOffsetX PLAYER_DATA DATA_SCREENSHAKE_OFFSET_X
+    read playerOffsetY PLAYER_DATA DATA_SCREENSHAKE_OFFSET_Y
+    read playerOffsetZ PLAYER_DATA DATA_SCREENSHAKE_OFFSET_Z
+    op add playerX playerX playerOffsetX
+    op add playerY playerY playerOffsetY
+    op add playerZ playerZ playerOffsetZ
+
+	op cos playerDirX playerRot
+	op sin playerDirY playerRot
+	op div playerPlaneX playerDirY -DISPLAY_FOV
+	op div playerPlaneY playerDirX DISPLAY_FOV
+
+	op mul invDet1 playerPlaneX playerDirY
+	op mul invDet2 playerDirX playerPlaneY
+	op sub invDet invDet1 invDet2
+	op div invDet 1 invDet
+
+	read markerCounter PLAYER_DATA DATA_FLOOR_COUNTER
+
+	op sub playerModX playerX HALF_RENDER_DISTANCE
+	op sub playerModY playerY HALF_RENDER_DISTANCE
+	op floor playerModX playerModX
+	op floor playerModY playerModY
+	op sub playerCheckX playerX 0.5
+	op sub playerCheckY playerY 0.5
+	#op mul playerCheckXMod playerDirX 4
+	#op mul playerCheckYMod playerDirY 4
+	#op sub playerCheckX playerCheckX playerCheckXMod
+	#op sub playerCheckY playerCheckY playerCheckYMod
+
+	set floorID PROC_ID
+	FloorLoop:
+		op idiv floorY floorID RENDER_DISTANCE
+		op mod floorX floorID RENDER_DISTANCE
+		op add floorX floorX playerModX
+		op add floorY floorY playerModY
+		op sub floorModX floorX playerCheckX
+		op sub floorModY floorY playerCheckY
+		op angle floorModAngle floorModX floorModY
+		op angleDiff angleDiff floorModAngle playerRot
+		jump NoRender greaterThan angleDiff 45
+
+		op add floorX+ floorX 1
+		op add floorY+ floorY 1
+
+		mac VertexTransform transX0 transY0 floorX floorY
+		mac VertexTransform transX1 transY1 floorX+ floorY
+		mac VertexTransform transX2 transY2 floorX+ floorY+
+		mac VertexTransform transX3 transY3 floorX floorY+
+		#mac VertexAttemptClip clipX0 clipY0 transX0 transY0 transX1 transY1 transX3 transY3 transX2 transY2 playerPlaneY U V shouldRender 
+		#jump NoRender equal shouldRender false
+		#mac VertexAttemptClip clipX1 clipY1 transX1 transY1 transX2 transY2 transX0 transY0 transX3 transY3 playerPlaneY U V shouldRender 
+		#jump NoRender equal shouldRender false
+		#mac VertexAttemptClip clipX2 clipY2 transX2 transY2 transX3 transY3 transX1 transY1 transX0 transY0 playerPlaneY U V shouldRender 
+		#jump NoRender equal shouldRender false
+		#mac VertexAttemptClip clipX3 clipY3 transX3 transY3 transX0 transY0 transX2 transY2 transX1 transY1 playerPlaneY U V shouldRender 
+		#jump NoRender equal shouldRender false
+		mac VertexProject drawX0 drawY0 transX0 transY0
+		mac VertexProject drawX1 drawY1 transX1 transY1
+		mac VertexProject drawX2 drawY2 transX2 transY2
+		mac VertexProject drawX3 drawY3 transX3 transY3
+
+		makemarker quad markerCounter 0 0 false
+		setmarker uvi markerCounter 0 0 0
+		setmarker uvi markerCounter 1 1 0
+		setmarker uvi markerCounter 2 1 1
+		setmarker uvi markerCounter 3 0 1
+		setmarker posi markerCounter 0 drawX0 drawY0
+		setmarker posi markerCounter 1 drawX1 drawY1
+		setmarker posi markerCounter 2 drawX2 drawY2
+		setmarker posi markerCounter 3 drawX3 drawY3
+		getblock floor floor floorX floorY
+		print floor
+		print "-icon-editor"
+		setmarker texture markerCounter true
+		op add markerCounter markerCounter 1
+
+		NoRender:
+	op add floorID floorID PROC_COUNT
+	jump FloorLoop lessThan floorID TOTAL_TILE_COUNT
+	write markerCounter PLAYER_DATA DATA_FLOOR_COUNTER
+jump Loop always
+
+defmac VertexTransform transformX transformY floorX floorY
+	op sub floorModX floorX $playerX
+	op sub floorModY floorY $playerY
+
+	op mul transformX1 $playerDirY floorModX
+	op mul transformX2 $playerDirX floorModY
+	op sub transformX transformX1 transformX2
+	op mul transformX transformX $invDet
+
+	op mul transformY1 $playerPlaneX floorModY
+	op mul transformY2 $playerPlaneY floorModX
+	op sub transformY transformY1 transformY2
+	op mul transformY transformY $invDet
+endmac
+
+defmac VertexProject drawX drawY transformX transformY
+	op div floorScreenX transformX transformY
+	op add floorScreenX 1 floorScreenX
+	op mul floorScreenX floorScreenX $displayWidthHalf
+	op add drawX floorScreenX $displayX
+
+	op div floorHeight $displayWidth transformY
+	op abs floorHeight floorHeight
+	op mul floorHeight floorHeight FOV
+	op mul floorHeightMod $playerZ floorHeight
+	op mul floorHeight floorHeight 0.5
+	op sub drawY $displayCenterY floorHeight
+	op add drawY drawY floorHeightMod
+endmac
+
+defmac VertexClip outX t inX inY pointX pointY n
+	op sub t1 n inY
+	op sub t2 pointY inY
+	op div t t1 t2
+
+	op sub xi pointX inX
+	op mul xi t xi
+	op add outX inX xi
+endmac
+
+defmac VertexAttemptClip outX outY inX inY pointX1 pointY1 pointX2 pointY2 pointX3 pointY3 n U V shouldRender 
+	jump CasePositive greaterThan inY 0
+	jump CasePoint1 greaterThan pointY1 0
+	jump CasePoint2 greaterThan pointY2 0
+	jump CasePoint3 greaterThan pointY3 0
+	set shouldRender false
+	jump End always
+	CasePositive:
+		set outX inX
+		set outY inY
+		set shouldRender true
+	jump End always
+	CasePoint1:
+		mac VertexClip outX t inX inY pointX1 pointY1 n
+		set outY 0
+		set shouldRender true
+	jump End always
+	CasePoint2:
+		mac VertexClip outX t inX inY pointX2 pointY2 n
+		set outY 0
+		set shouldRender true
+	jump End always
+	CasePoint3:
+		mac VertexClip outX t inX inY pointX3 pointY3 n
+		set outY 0
+		set shouldRender true
+	jump End always
+	End:
+endmac

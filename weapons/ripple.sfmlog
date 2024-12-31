@@ -1,0 +1,45 @@
+W_Ripple:
+    mac SetAmmoType W_RIPPLE_AMMO hasAmmo
+    jump W_Ripple_NotShooting notEqual playerShooting true
+        op add testTime lastShootTime W_RIPPLE_SHOOT_DELAY
+        jump W_Ripple_NotShooting lessThan @second testTime
+        set lastShootTime @second
+
+        if equal hasAmmo true
+            mac GetAmmo ammo W_RIPPLE_AMMO
+            jump W_Ripple_NoAmmo lessThan ammo W_RIPPLE_AMMO_COST
+            op sub ammo ammo W_RIPPLE_AMMO_COST
+            mac SetAmmo ammo W_RIPPLE_AMMO
+        endif
+
+        playsound false @sfx-shotgun 0.5 1 0 null null true
+
+        set currentBullet 0
+        W_Ripple_ShootLoop:
+            op rand shootAngle W_RIPPLE_SHOT_SPREAD
+            pop div halfShotSpread W_RIPPLE_SHOT_SPREAD 2
+            op sub shootAngle shootAngle halfShotSpread
+            op add shootAngle playerRot shootAngle
+            op cos dx shootAngle
+            op sin dy shootAngle
+            op mul dx dx W_RIPPLE_SHOT_SPEED
+            op mul dy dy W_RIPPLE_SHOT_SPEED
+    
+            mac MakePlayerBullet ENTITY_B_PBULLET playerX playerY dx dy W_RIPPLE_SHOT_DAMAGE W_RIPPLE_SHOT_SIZE
+        op add currentBullet currentBullet 1
+        jump W_Ripple_ShootLoop lessThan currentBullet W_RIPPLE_SHOT_COUNT
+
+    if equal hasAmmo true
+        jump W_Ripple_NotShooting always
+        W_Ripple_NoAmmo:
+        playsound false @sfx-noammo 1 1 0 null null true
+    endif
+    
+    W_Ripple_NotShooting:
+    op mul markerSize 0.5 displayWidth
+    op mul markerYOffset -0.1 displayHeight
+    op add markerY displayY markerYOffset
+    setmarker textureSize MARKER_ID markerSize markerSize
+    setmarker texture MARKER_ID false "ripple"
+    setmarker pos MARKER_ID displayCenterX markerY
+jump WeaponOneSpriteExit always

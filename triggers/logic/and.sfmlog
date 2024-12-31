@@ -1,0 +1,9 @@
+L_And:
+    read outIndex TRIGGER_INDEX triggerID
+    read index1 TRIGGER_DATA1 triggerID
+    read index2 TRIGGER_DATA2 triggerID
+    read state1 TRIGGER_MEMORY index1
+    read state2 TRIGGER_MEMORY index2
+    op land state state1 state2
+    write state TRIGGER_MEMORY outIndex
+jump ExitTrigger always

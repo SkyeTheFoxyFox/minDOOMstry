@@ -1,0 +1,4 @@
+setrate 1000
+import constants.sfmlog
+wait 1e-4
+write 11000 PLAYER_DATA DATA_FLOOR_COUNTER

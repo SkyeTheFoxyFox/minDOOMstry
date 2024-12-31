@@ -1,0 +1,33 @@
+W_Meltdown:
+    mac SetAmmoType W_MELTDOWN_AMMO hasAmmo
+    jump W_Meltdown_NotShooting notEqual playerShooting true
+        op add testTime lastShootTime W_MELTDOWN_SHOOT_DELAY
+        jump W_Meltdown_NotShooting lessThan @second testTime
+        set lastShootTime @second
+        if equal hasAmmo true
+            mac GetAmmo ammo W_MELTDOWN_AMMO
+            jump W_Meltdown_NoAmmo lessThan ammo W_MELTDOWN_AMMO_COST
+            op sub ammo ammo W_MELTDOWN_AMMO_COST
+            mac SetAmmo ammo W_MELTDOWN_AMMO
+        endif
+        playsound false @sfx-missileLaunch 0.75 1 0 null null true
+
+        op cos dx playerRot
+        op sin dy playerRot
+        op mul dx dx W_MELTDOWN_SHOT_SPEED
+        op mul dy dy W_MELTDOWN_SHOT_SPEED
+
+        mac MakePlayerBullet ENTITY_B_PBULLET_ROCKET playerX playerY dx dy W_MELTDOWN_SHOT_DAMAGE W_MELTDOWN_SHOT_SIZE
+    if equal hasAmmo true
+        jump W_Meltdown_NotShooting always
+        W_Meltdown_NoAmmo:
+        playsound false @sfx-noammo 1 1 0 null null true
+    endif
+    W_Meltdown_NotShooting:
+    op mul markerSize 0.5 displayWidth
+    op mul markerYOffset -0.1 displayHeight
+    op add markerY displayY markerYOffset
+    setmarker textureSize MARKER_ID markerSize markerSize
+    setmarker texture MARKER_ID false "meltdown"
+    setmarker pos MARKER_ID displayCenterX markerY
+jump WeaponOneSpriteExit always

@@ -1,0 +1,101 @@
+B_PBulletEnergy:
+    #update logic
+    read dx ENTITY_CUSTOM_DATA1 entityID
+    read dy ENTITY_CUSTOM_DATA2 entityID
+    read bulletSize ENTITY_CUSTOM_DATA4 entityID
+    read bulletBounces ENTITY_CUSTOM_DATA5 entityID
+    jump B_PBulletEnergy_Die lessThanEq bulletBounces 0
+
+    read bulletEnd ENTITY_HEALTH entityID
+    jump B_PBulletEnergy_Collide equal bulletEnd -1
+
+    op mul dxt dx dt
+    op mul dyt dy dt
+    op add newEntityX entityX dxt
+    op add newEntityY entityY dyt
+
+    mac Sign signDX dx
+    mac Sign signDY dy
+    op mul checkOffsetX bulletSize signDX
+    op mul checkOffsetY bulletSize signDY
+    op add newEntityX newEntityX checkOffsetX
+    op add newEntityY newEntityY checkOffsetY
+    mac RealGetblock checkBlockX newEntityX entityY
+    op equal flipX checkBlockX @air
+    op sub flipX flipX 0.5
+    op mul flipX flipX 2
+    op mul dx dx flipX
+    mac RealGetblock checkBlockY entityX newEntityY
+    op equal flipY checkBlockY @air
+    op sub flipY flipY 0.5
+    op mul flipY flipY 2
+    op mul dy dy flipY
+    jump B_PBulletEnergy_DidCollide notEqual checkBlockX @air
+    jump B_PBulletEnergy_DidCollide notEqual checkBlockY @air
+        mac RealGetblock checkBlock newEntityX newEntityY
+        jump B_PBulletEnergy_NoCollide equal checkBlock @air
+        op abs absDY dy
+        op abs absDX dx
+        jump B_PBulletEnergy_CornerCondTrue greaterThan absDY absDX
+            op mul dy dy -1
+        jump B_PBulletEnergy_DidCollide always
+        B_PBulletEnergy_CornerCondTrue:
+            op mul dx dx -1
+    jump B_PBulletEnergy_DidCollide always
+
+    B_PBulletEnergy_Collide:
+    write 0 ENTITY_HEALTH entityID
+
+    read collideAngle ENTITY_CUSTOM_DATA6 entityID
+    op cos collideVecX collideAngle
+    op sin collideVecY collideAngle
+    op len speed dx dy
+    op div dx dx speed
+    op div dy dy speed
+
+    mac 2dDotProduct collideDP dx dy collideVecX collideVecY
+    op abs collideDP collideDP
+    op mul collideDP collideDP 2
+    op mul collideVecX collideVecX collideDP
+    op mul collideVecY collideVecY collideDP
+    op add dx dx collideVecX
+    op add dy dy collideVecY
+
+    op len length dx dy
+    op div speed speed length
+    op mul dx dx speed
+    op mul dy dy speed
+    jump B_PBulletEnergy_DidCollide always
+
+    B_PBulletEnergy_Die:
+    write ENTITY_NONE ENTITY_TYPE entityID
+    jump NoRender always
+
+    B_PBulletEnergy_DidCollide:
+    op sub bulletBounces bulletBounces 1
+    write dx ENTITY_CUSTOM_DATA1 entityID
+    write dy ENTITY_CUSTOM_DATA2 entityID
+    write bulletBounces ENTITY_CUSTOM_DATA5 entityID
+
+    B_PBulletEnergy_NoCollide:
+    op mul dxt dx dt
+    op mul dyt dy dt
+    op add entityX entityX dxt
+    op add entityY entityY dyt
+    write entityX ENTITY_X entityID
+    write entityY ENTITY_Y entityID
+
+    #render logic
+    jump NoRender equal shouldRender false
+
+    op div spriteHeightQuarter spriteHeight 4
+    op sub entityScreenY entityScreenY spriteHeightQuarter
+
+    op div bulletHeight spriteHeight 2
+
+    setmarker pos markerID entityScreenX entityScreenY
+    setmarker textureSize markerID bulletHeight bulletHeight
+    setmarker color markerID %ffffff
+    setmarker rotation markerID 0
+    setmarker texture markerID false "point-laser-center"
+jump EntityOneMarkerExit always

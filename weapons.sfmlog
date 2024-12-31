@@ -1,0 +1,193 @@
+
+setrate 1000
+
+const MARKER_ID 10500
+const MARKER_ID_2 10501
+
+import constants.sfmlog
+import stats.sfmlog
+
+setmarker remove MARKER_ID
+makemarker texture MARKER_ID 0 0 false
+setmarker drawLayer MARKER_ID 130
+setmarker textureSize MARKER_ID 0.01 0.01
+
+setmarker remove MARKER_ID_2
+makemarker texture MARKER_ID_2 0 0 false
+setmarker drawLayer MARKER_ID_2 130
+
+set lastShootTime 0
+
+Loop:
+	fetch unit controlUnit @sharded 0 @nova
+
+	wait 1e-4
+	op sub dt @second oldTime
+	set oldTime @second
+
+	mac ComputeScreen controlUnit
+
+	read playerX PLAYER_DATA DATA_X
+	read playerY PLAYER_DATA DATA_Y
+	read playerRot PLAYER_DATA DATA_ROT
+	read playerShooting PLAYER_DATA DATA_SHOOTING
+	jump SkipWeaponSwap greaterThan foreshadowCheckTime 0
+	read playerSelectedWeapon PLAYER_DATA DATA_SELECTED_WEAPON
+	SkipWeaponSwap:
+
+	op add @counter @counter playerSelectedWeapon
+
+	jump W_Fist always
+	jump W_Duo always
+	jump W_Scorch always
+	jump W_Segment always
+	jump W_Salvo always
+	jump W_Meltdown always
+	jump W_Ripple always
+	jump W_Foreshadow always
+	NoRender:
+	setmarker textureSize MARKER_ID 0.01 0.01
+	setmarker pos MARKER_ID 0 0
+	WeaponOneSpriteExit:
+	setmarker textureSize MARKER_ID_2 0.01 0.01
+	setmarker pos MARKER_ID_2 0 0
+	WeaponTwoSpriteExit:
+
+jump Loop always
+
+W_Fist:
+	write AMMO_NONE PLAYER_DATA DATA_ACTIVE_AMMO
+jump NoRender always
+	
+import "weapons/duo.sfmlog"
+import "weapons/scorch.sfmlog"
+import "weapons/segment.sfmlog"
+import "weapons/salvo.sfmlog"
+import "weapons/meltdown.sfmlog"
+import "weapons/ripple.sfmlog"
+import "weapons/foreshadow.sfmlog"
+
+defmac MakePlayerBullet type x y dx dy damage size health data5 #gets evaluated for collisions with enemies
+	set i 479
+	Loop:
+		op add i i 1
+		read storedType ENTITY_TYPE i
+		jump BreakLoop greaterThanEq i 512
+	jump Loop notEqual storedType 0
+	write type ENTITY_TYPE i
+	write x ENTITY_X i
+	write y ENTITY_Y i
+	write true ENTITY_ENABLE i
+	write dx ENTITY_CUSTOM_DATA1 i
+	write dy ENTITY_CUSTOM_DATA2 i
+	write damage ENTITY_CUSTOM_DATA3 i
+	write size ENTITY_CUSTOM_DATA4 i
+	if notEqual health null
+		write health ENTITY_HEALTH i
+	endif
+	if equal health null
+		write 0 ENTITY_HEALTH i
+	endif
+	if notEqual data5 null
+		write data5 ENTITY_CUSTOM_DATA5 i
+	endif
+	BreakLoop:
+endmac
+
+defmac MakeEntity type x y enable health data1 data2 data3 data4 data5
+	set i -1
+	Loop:
+		op add i i 1
+		read storedType ENTITY_TYPE i
+		jump BreakLoop greaterThanEq i 480
+	jump Loop notEqual storedType 0
+	write type ENTITY_TYPE i
+	write x ENTITY_X i
+	write y ENTITY_Y i
+	write enable ENTITY_ENABLE i
+	if notEqual health null
+		write health ENTITY_HEALTH i
+	endif
+	if notEqual data1 null
+		write data1 ENTITY_CUSTOM_DATA1 i
+	endif
+	if notEqual data2 null
+		write data2 ENTITY_CUSTOM_DATA2 i
+	endif
+	if notEqual data3 null
+		write data3 ENTITY_CUSTOM_DATA3 i
+	endif
+	if notEqual data4 null
+		write data4 ENTITY_CUSTOM_DATA4 i
+	endif
+	if notEqual data5 null
+		write data5 ENTITY_CUSTOM_DATA5 i
+	endif
+	BreakLoop:
+endmac
+
+defmac SetAmmoType type hasAmmo
+	pset hasAmmo true
+	if equal type "copper"
+		write AMMO_COPPER PLAYER_DATA DATA_ACTIVE_AMMO
+	endif
+	if equal type "blast"
+		write AMMO_BLAST PLAYER_DATA DATA_ACTIVE_AMMO
+	endif
+	if equal type "surge"
+		write AMMO_SURGE PLAYER_DATA DATA_ACTIVE_AMMO
+	endif
+	if notEqual type "copper"
+		if notEqual type "blast"
+			if notEqual type "surge"
+				write AMMO_NONE PLAYER_DATA DATA_ACTIVE_AMMO
+				pset hasAmmo false
+			endif
+		endif
+	endif
+endmac
+
+defmac GetAmmo amount type
+	if equal type "copper"
+		read amount PLAYER_DATA DATA_AMMO_COPPER
+	endif
+	if equal type "blast"
+		read amount PLAYER_DATA DATA_AMMO_BLAST
+	endif
+	if equal type "surge"
+		read amount PLAYER_DATA DATA_AMMO_SURGE
+	endif
+endmac
+
+defmac SetAmmo amount type
+	if equal type "copper"
+		write amount PLAYER_DATA DATA_AMMO_COPPER
+	endif
+	if equal type "blast"
+		write amount PLAYER_DATA DATA_AMMO_BLAST
+	endif
+	if equal type "surge"
+		write amount PLAYER_DATA DATA_AMMO_SURGE
+	endif
+endmac
+
+defmac Spring force desiredValue currentValue springConstant
+	op sub offset currentValue desiredValue
+	op mul force springConstant offset
+	op mul force force -1
+endmac
+
+defmac UpdateSpring value velocity desiredValue springConstant mass damping dt
+	mac Spring force desiredValue value springConstant
+	op div accel force mass
+	op mul adt accel dt
+	op mul velocity velocity damping
+	op add velocity velocity adt
+	op mul vdt velocity dt
+	op add value value vdt
+endmac 
+
+defmac ApplyImpulse impulse velocity mass
+	op mul i impulse mass
+	op add velocity velocity i
+endmac

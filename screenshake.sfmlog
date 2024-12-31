@@ -1,0 +1,30 @@
+setrate 1000
+import constants.sfmlog
+
+Loop:
+    wait 1e-4
+    read magnitude PLAYER_DATA DATA_SCREENSHAKE_MAGNITUDE
+    read start PLAYER_DATA DATA_SCREENSHAKE_START
+    read end PLAYER_DATA DATA_SCREENSHAKE_END
+    op sub duration end start
+    op sub progress end @second
+    op div progress progress duration
+    jump ScreenshakeEnd lessThan end @second
+    op mul magnitude magnitude progress
+    op mul mag magnitude 2
+    op rand randx mag
+    op rand randy mag
+    op rand randz mag
+    op sub randx randx magnitude
+    op sub randy randy magnitude
+    op sub randz randz magnitude
+    write randx PLAYER_DATA DATA_SCREENSHAKE_OFFSET_X
+    write randy PLAYER_DATA DATA_SCREENSHAKE_OFFSET_Y
+    write randz PLAYER_DATA DATA_SCREENSHAKE_OFFSET_Z
+    jump Exit always
+    ScreenshakeEnd:
+    write 0 PLAYER_DATA DATA_SCREENSHAKE_OFFSET_X
+    write 0 PLAYER_DATA DATA_SCREENSHAKE_OFFSET_Y
+    write 0 PLAYER_DATA DATA_SCREENSHAKE_OFFSET_Z
+    Exit:
+jump Loop always

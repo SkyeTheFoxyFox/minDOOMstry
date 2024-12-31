@@ -1,0 +1,32 @@
+I_Switch:
+    #update logic
+    read index ENTITY_CUSTOM_DATA1 entityID
+    read state TRIGGER_MEMORY index
+    jump I_Switch_NoPress notEqual pressS true
+    mac Distance dist entityX entityY playerX playerY
+    jump I_Switch_NoPress greaterThan dist 2
+        mac PlaySoundWorld @sfx-click entityX entityY playerX playerY playerRot 1
+        op notEqual state state true
+        write state TRIGGER_MEMORY index
+    I_Switch_NoPress:
+
+    #render logic
+    jump NoRender equal shouldRender false
+
+    op div spriteHeightHalf spriteHeight 2
+    op div spriteHeightQuarter spriteHeight 4
+    op sub entityScreenY entityScreenY spriteHeightQuarter
+
+    setmarker pos markerID entityScreenX entityScreenY
+    setmarker textureSize markerID spriteHeightHalf spriteHeightHalf
+    setmarker color markerID %ffffff
+    setmarker rotation markerID 0
+    setmarker texture markerID false "switch"
+    jump EntityOneMarkerExit equal state false
+    op div sprite2Height spriteHeightHalf 2.666
+    setmarker pos markerID2 entityScreenX entityScreenY
+    setmarker textureSize markerID2 sprite2Height sprite2Height
+    setmarker color markerID2 %ffffff
+    setmarker rotation markerID2 0
+    setmarker texture markerID2 false "switch-on"
+jump EntityTwoMarkerExit always

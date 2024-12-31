@@ -1,0 +1,107 @@
+setrate 1000
+import constants.sfmlog
+import stats.sfmlog
+
+mac InitIconBar 10502 10503 "team-sharded" "team-sharded" %ffffff %000000
+
+Loop:
+	fetch unit controlUnit @sharded 0 @nova
+
+	sensor displayWidth controlUnit @cameraWidth
+	sensor displayHeight controlUnit @cameraHeight
+	sensor displayCenterX controlUnit @cameraX
+	sensor displayCenterY controlUnit @cameraY
+
+	op div displayWidthHalf displayWidth 2
+	op div displayHeightHalf displayHeight 2
+	op sub displayY displayCenterY displayHeightHalf
+	op sub displayX displayCenterX displayWidthHalf
+	#op sub vertOffset displayWidthHalf displayHeightHalf
+	#op add vertOffset vertOffset displayY
+
+	read playerHealth PLAYER_DATA DATA_HEALTH
+	op div healthProg playerHealth PLAYER_MAX_HEALTH
+
+	mac DrawIconBar 0.25 0.005 0.1 0.1 healthProg 10502 10503
+
+jump Loop always
+
+defmac TranslatePoint ox oy ix iy
+	op mul ox ix $displayWidth
+	op add ox ox $displayX
+	op mul oy iy $displayWidth
+	op add oy oy $displayY
+endmac
+	
+defmac ScaleValueW ov iv
+	op mul ov iv $displayWidth
+endmac
+
+defmac ScaleValueH ov iv
+	op mul ov iv $displayHeight
+endmac
+
+defmac Lerp o a b t
+	op sub o b a
+	op mul o o t
+	op add o o a
+endmac
+
+defmac InitBar marker1 marker2
+	makemarker line marker1 0 0 false
+	setmarker drawLayer marker1 200
+	makemarker line marker2 0 0 false
+	setmarker drawLayer marker2 200
+endmac
+
+defmac DrawBar x1 y1 x2 y2 widthFront widthBack progress colorFront colorBack marker1 marker2
+	mac TranslatePoint barX1 barY1 x1 y1
+	mac TranslatePoint barX2 barY2 x2 y2
+	mac ScaleValue barWidthFront widthFront
+	mac ScaleValue barWidthBack widthBack
+	mac Lerp barXP barX1 barX2 progress
+	mac Lerp barYP barY1 barY2 progress
+	setmarker color marker1 colorBack
+	setmarker pos marker1 barX1 barY1
+	setmarker endPos marker1 barX2 barY2
+	setmarker stroke marker1 barWidthBack
+	setmarker color marker2 colorFront
+	setmarker pos marker2 barX1 barY1
+	setmarker endPos marker2 barXP barYP
+	setmarker stroke marker2 barWidthFront
+endmac
+
+defmac InitIconBar marker1 marker2 textureFront textureBack colorFront colorBack
+	makemarker quad marker1 0 0 false
+	setmarker drawLayer marker1 200
+	setmarker texture marker1 false textureBack
+	setmarker color marker1 colorBack
+	setmarker uvi marker1 0 0 0
+	setmarker uvi marker1 1 2 0
+	setmarker uvi marker1 2 2 2
+	setmarker uvi marker1 3 0 2
+	makemarker quad marker2 0 0 false
+	setmarker drawLayer marker2 200
+	setmarker texture marker2 false textureFront
+	setmarker color marker2 colorFront
+endmac
+
+defmac DrawIconBar x y width height progress marker1 marker2
+	pop add x2 x width
+	pop add y2 y height
+	mac TranslatePoint ix1 iy1 x y
+	mac TranslatePoint ix2 iy2 x2 y2
+	mac Lerp iyp iy1 iy2 progress
+	setmarker posi marker1 0 ix1 iy1
+	setmarker posi marker1 1 ix2 iy1
+	setmarker posi marker1 2 ix2 iy2
+	setmarker posi marker1 3 ix1 iy2
+	setmarker posi marker2 0 ix1 iy1
+	setmarker posi marker2 1 ix2 iy1
+	setmarker posi marker2 2 ix2 iyp
+	setmarker posi marker2 3 ix1 iyp
+	setmarker uvi marker2 0 0 0
+	setmarker uvi marker2 1 1 0
+	setmarker uvi marker2 2 1 progress
+	setmarker uvi marker2 3 0 progress
+endmac

@@ -1,0 +1,86 @@
+#player
+    const PLAYER_START_X 70.5
+    const PLAYER_START_Y 118.5
+    const PLAYER_START_ROT 0
+    
+    const PLAYER_MAX_HEALTH 100
+    const PLAYER_MOVE_SPEED 10
+    const PLAYER_STRAFE_SPEED 5
+    const PLAYER_ROT_SPEED 180
+    const PLAYER_SIZE 0.25
+
+#enemies
+    const E_DAGGER_HEALTH 10
+    const E_DAGGER_SPEED 1
+    const E_DAGGER_SIZE 0.25
+    const E_DAGGER_SHOOT_DELAY 1
+    const E_DAGGER_BULLET_DAMAGE 1
+    const E_DAGGER_SHOT_SPEED 15
+
+#weapons
+    const W_DUO_AMMO null
+    const W_DUO_AMMO_COST 0
+    const W_DUO_SHOT_DAMAGE 1
+    const W_DUO_SHOOT_DELAY 0.5
+    const W_DUO_SHOT_SPEED 75
+    const W_DUO_SHOT_SIZE 0.5
+    const W_DUO_MASS 1
+    const W_DUO_RECOIL -1
+    
+    const W_SCORCH_AMMO "blast"
+    const W_SCORCH_AMMO_COST 0.2
+    const W_SCORCH_SHOT_DAMAGE 1
+    const W_SCORCH_SHOOT_DELAY 0.1
+    const W_SCORCH_SHOT_SPEED 25
+    const W_SCORCH_SHOT_LIFE 0.5
+    const W_SCORCH_SHOT_SIZE 0.5
+    
+    const W_SEGMENT_AMMO "surge"
+    const W_SEGMENT_AMMO_COST 5
+    const W_SEGMENT_SHOT_DAMAGE 5
+    const W_SEGMENT_SHOOT_DELAY 1
+    const W_SEGMENT_SHOT_SPEED 10
+    const W_SEGMENT_SHOT_SIZE 0.5
+    const W_SEGMENT_BOUNCE_LIMIT 5
+    
+    const W_SALVO_AMMO "copper"
+    const W_SALVO_AMMO_COST 1
+    const W_SALVO_SHOT_DAMAGE 1
+    const W_SALVO_SHOT_COUNT 4
+    const W_SALVO_SHOOT_DELAY 0.05
+    const W_SALVO_BURST_DELAY 0.5
+    const W_SALVO_SHOT_SPEED 75
+    const W_SALVO_SHOT_SIZE 0.5
+    const W_SALVO_MASS 1
+    const W_SALVO_RECOIL -0.25
+    
+    const W_MELTDOWN_AMMO "blast"
+    const W_MELTDOWN_AMMO_COST 1
+    const W_MELTDOWN_SHOT_DAMAGE 5
+    const W_MELTDOWN_BLAST_DAMAGE 3
+    const W_MELTDOWN_BLAST_RADIUS 5
+    const W_MELTDOWN_SHOOT_DELAY 1
+    const W_MELTDOWN_SHOT_SPEED 15
+    const W_MELTDOWN_SHOT_SIZE 0.5
+    
+    const W_RIPPLE_AMMO "copper"
+    const W_RIPPLE_AMMO_COST 6
+    const W_RIPPLE_SHOT_DAMAGE 1
+    const W_RIPPLE_SHOT_COUNT 6
+    const W_RIPPLE_SHOT_SPREAD 10
+    const W_RIPPLE_SHOOT_DELAY 1
+    const W_RIPPLE_SHOT_SPEED 75
+    const W_RIPPLE_SHOT_SIZE 0.5
+    
+    const W_FORESHADOW_AMMO "surge"
+    const W_FORESHADOW_AMMO_COST 40
+    const W_FORESHADOW_SHOT_DAMAGE 10
+    const W_FORESHADOW_BLAST_DAMAGE 5
+    const W_FORESHADOW_BLAST_RADIUS 5
+    const W_FORESHADOW_SHOOT_DELAY 5
+    const W_FORESHADOW_SHOT_SPEED 10
+    const W_FORESHADOW_SHOT_SIZE 1
+    const W_FORESHADOW_FRAG_COUNT 16
+    const W_FORESHADOW_FRAG_DAMAGE 1
+    const W_FORESHADOW_FRAG_SIZE 0.5
+    const W_FORESHADOW_FRAG_SPEED 20

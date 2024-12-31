@@ -1,0 +1,41 @@
+B_PBulletRocket:
+    #update logic
+    read dx ENTITY_CUSTOM_DATA1 entityID
+    read dy ENTITY_CUSTOM_DATA2 entityID
+
+    read bulletEnd ENTITY_HEALTH entityID
+    jump B_PBulletRocket_Die equal bulletEnd -1
+
+    op mul dx dx dt
+    op mul dy dy dt
+    op add entityX entityX dx
+    op add entityY entityY dy
+    mac RealGetblock checkBlock entityX entityY
+    jump B_PBulletRocket_NoCollide equal checkBlock @air
+        B_PBulletRocket_Die:
+        mac PlaySoundWorld @sfx-plasmaboom entityX entityY playerX playerY playerRot 3
+        write ENTITY_B_PEXPLOSION_ROCKET ENTITY_TYPE entityID
+        write 0 ENTITY_HEALTH entityID
+        write 0 ENTITY_CUSTOM_DATA1 entityID
+        write 0 ENTITY_CUSTOM_DATA2 entityID
+        write W_MELTDOWN_BLAST_DAMAGE ENTITY_CUSTOM_DATA3 entityID
+        write W_MELTDOWN_BLAST_RADIUS ENTITY_CUSTOM_DATA4 entityID
+        jump NoRender always
+    B_PBulletRocket_NoCollide:
+    write entityX ENTITY_X entityID
+    write entityY ENTITY_Y entityID
+
+    #render logic
+    jump NoRender equal shouldRender false
+
+    op div spriteHeightQuarter spriteHeight 4
+    op sub entityScreenY entityScreenY spriteHeightQuarter
+
+    op div bulletHeight spriteHeight 2
+
+    setmarker pos markerID entityScreenX entityScreenY
+    setmarker textureSize markerID bulletHeight bulletHeight
+    setmarker color markerID %ffffff
+    setmarker rotation markerID 0
+    setmarker texture markerID false "scathe-missile"
+jump EntityOneMarkerExit always

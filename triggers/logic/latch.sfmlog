@@ -1,0 +1,7 @@
+L_Latch:
+    read outIndex TRIGGER_INDEX triggerID
+    read index TRIGGER_DATA1 triggerID
+    read state TRIGGER_MEMORY index
+    jump ExitTrigger equal state false
+    write true TRIGGER_MEMORY outIndex
+jump ExitTrigger always

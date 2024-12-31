@@ -1,0 +1,9 @@
+E_Radius:
+    read index TRIGGER_INDEX triggerID
+    read x TRIGGER_DATA1 triggerID
+    read y TRIGGER_DATA2 triggerID
+    read radius TRIGGER_DATA3 triggerID
+    mac Distance dist x y playerX playerY
+    op lessThan check dist radius
+    write check TRIGGER_MEMORY index
+jump ExitTrigger always

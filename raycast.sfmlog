@@ -1,0 +1,214 @@
+const PROC_ID {iteration}
+const PROC_COUNT {iteration_count}
+
+import constants.sfmlog
+
+pop mul DISPLAY_FOV FOV 2
+pop mul -DISPLAY_FOV DISPLAY_FOV -1
+
+pset RAYCAST_COLUMNS_PER_PROC 5
+
+pop mul RAYCAST_COLUMNS_TOTAL RAYCAST_COLUMNS_PER_PROC PROC_COUNT
+pop div RAYCAST_COLUMN_WIDTH 1 RAYCAST_COLUMNS_TOTAL
+pop mul RAYCAST_PROC_COLLUMN_START RAYCAST_COLUMNS_PER_PROC PROC_ID
+pop add RAYCAST_PROC_COLLUMN_END RAYCAST_PROC_COLLUMN_START RAYCAST_COLUMNS_PER_PROC
+
+setrate 5000
+
+mac Init
+
+Main:
+	wait 1e-4
+	fetch unit controlUnit @sharded 0 @nova
+
+	mac ComputeScreen controlUnit
+
+	op div displayWidthHalf displayWidth 2
+	op div displayHeightHalf displayWidth 2
+	op sub displayY displayCenterY displayHeightHalf
+	op sub displayX displayCenterX displayWidthHalf
+
+
+	op div RAYCAST_PROC_WIDTH displayWidth PROC_COUNT
+	op mul RAYCAST_RENDER_START RAYCAST_PROC_WIDTH PROC_ID
+	op div RAYCAST_RENDER_WIDTH displayWidth RAYCAST_COLUMNS_TOTAL
+	op div RAYCAST_RENDER_WIDTH_HALF RAYCAST_RENDER_WIDTH 2
+	op add RAYCAST_RENDER_START RAYCAST_RENDER_START displayX
+
+	read playerX PLAYER_DATA DATA_X
+	read playerY PLAYER_DATA DATA_Y
+	read playerZ PLAYER_DATA DATA_Z
+	read playerRot PLAYER_DATA DATA_ROT
+
+	read playerOffsetX PLAYER_DATA DATA_SCREENSHAKE_OFFSET_X
+    read playerOffsetY PLAYER_DATA DATA_SCREENSHAKE_OFFSET_Y
+    read playerOffsetZ PLAYER_DATA DATA_SCREENSHAKE_OFFSET_Z
+    op add playerX playerX playerOffsetX
+    op add playerY playerY playerOffsetY
+    op add playerZ playerZ playerOffsetZ
+
+	op cos playerDirX playerRot
+	op sin playerDirY playerRot
+	op div playerPlaneX playerDirY -DISPLAY_FOV
+	op div playerPlaneY playerDirX DISPLAY_FOV
+	set i $RAYCAST_PROC_COLLUMN_START
+	Loop:
+		mac Raycast i playerX playerY playerZ playerDirX playerDirY playerPlaneX playerPlaneY 
+		op add i i 1
+	jump Loop lessThan i $RAYCAST_PROC_COLLUMN_END
+jump Main always
+
+defmac Raycast camX posX posY posZ dirX dirY planeX planeY
+	op mul cameraX camX 2
+	op div cameraX cameraX $RAYCAST_COLUMNS_TOTAL
+	op sub cameraX cameraX 1
+	op mul rayDirX planeX cameraX
+	op add rayDirX dirX rayDirX
+	op mul rayDirY planeY cameraX
+	op add rayDirY dirY rayDirY
+
+	op floor mapX posX
+	op floor mapY posY
+
+	jump XCondTrue equal rayDirX 0
+		op div deltaDistX 1 rayDirX
+		op abs deltaDistX deltaDistX
+	jump XCondExit always
+	XCondTrue:
+		set deltaDistX 1e30
+	XCondExit:
+
+	jump YCondTrue equal rayDirY 0
+		op div deltaDistY 1 rayDirY
+		op abs deltaDistY deltaDistY
+	jump YCondExit always
+	YCondTrue:
+		set deltaDistY 1e30
+	YCondExit:
+
+	set hit false
+
+	jump XHitCondTrue lessThan rayDirX 0
+		set stepX 1
+		op add sideDistX mapX 1
+		op sub sideDistX sideDistX posX
+		op mul sideDistX sideDistX deltaDistX
+	jump XHitCondExit always
+	XHitCondTrue:
+		set stepX -1
+		op sub sideDistX posX mapX
+		op mul sideDistX sideDistX deltaDistX
+	XHitCondExit:
+
+	jump YHitCondTrue lessThan rayDirY 0
+		set stepY 1
+		op add sideDistY mapY 1
+		op sub sideDistY sideDistY posY
+		op mul sideDistY sideDistY deltaDistY
+	jump YHitCondExit always
+	YHitCondTrue:
+		set stepY -1
+		op sub sideDistY posY mapY
+		op mul sideDistY sideDistY deltaDistY
+	YHitCondExit:
+
+	#set stepCount 0
+
+	Loop:
+		jump StepCondTrue lessThan sideDistX sideDistY
+			op add sideDistY sideDistY deltaDistY
+			op add mapY mapY stepY
+			set side 1
+		jump StepCondExit always
+		StepCondTrue:
+			op add sideDistX sideDistX deltaDistX
+			op add mapX mapX stepX
+			set side 0
+		StepCondExit:
+		getblock block collideBlock mapX mapY
+		op notEqual hit collideBlock @air
+		#op add stepCount stepCount 1
+		#jump BreakLoop greaterThan stepCount 100
+	jump Loop equal hit false
+	BreakLoop:
+
+	jump SideCondTrue equal side false
+		op sub perpWallDist sideDistY deltaDistY
+	jump SideCondExit always
+	SideCondTrue:
+		op sub perpWallDist sideDistX deltaDistX
+	SideCondExit:
+
+	op div lineHeight $displayWidth perpWallDist
+	op mul lineHeight lineHeight FOV
+
+	op div lineTop lineHeight 2
+	op mul lineBottom lineTop -1
+
+	op mul Ymod posZ lineHeight
+	op add renderCenter $displayCenterY Ymod
+
+	op add lineTop lineTop renderCenter
+	op add lineBottom lineBottom renderCenter
+	op mul lineLeft camX $RAYCAST_RENDER_WIDTH
+	op add lineLeft lineLeft $displayX
+	op add lineRight lineLeft $RAYCAST_RENDER_WIDTH
+
+	setmarker posi camX 0 lineRight lineBottom
+	setmarker posi camX 1 lineRight lineTop
+	setmarker posi camX 2 lineLeft lineTop
+	setmarker posi camX 3 lineLeft lineBottom
+
+	op mul dist perpWallDist -1
+	op div dist dist 100
+	op add dist dist 121
+	setmarker drawLayer camX dist 
+
+	print collideBlock
+	print "-icon-editor"
+	setmarker texture camX true
+
+	jump WallCondTrue equal side 0
+		op mul wallX perpWallDist rayDirX
+		op add wallX wallX posX
+		setmarker color camX %ffffff
+	jump WallCondExit always
+	WallCondTrue:
+		op mul wallX perpWallDist rayDirY
+		op add wallX wallX posY
+		setmarker color camX %dddddd
+	WallCondExit:
+
+	op floor floorWallX wallX
+	op sub wallX wallX floorWallX
+
+	op equal wallFlipCheck1 side 0
+	op lessThan wallFlipCheck2 rayDirX 0
+	op land wallFlipCheck3 wallFlipCheck1 wallFlipCheck2
+	op equal wallFlipCheck1 side 1
+	op greaterThan wallFlipCheck2 rayDirY 0
+	op land wallFlipCheck4 wallFlipCheck1 wallFlipCheck2
+	op or wallFlipCheck wallFlipCheck3 wallFlipCheck4
+	jump WallFlipCondExit notEqual wallFlipCheck true
+		op sub wallX wallX 1
+		op abs wallX wallX
+	WallFlipCondExit:
+
+	setmarker uvi camX 0 wallX 0
+	setmarker uvi camX 1 wallX 1
+	setmarker uvi camX 2 wallX 1
+	setmarker uvi camX 3 wallX 0
+	
+endmac
+
+defmac Init
+	set i $RAYCAST_PROC_COLLUMN_START
+	set x $RAYCAST_RENDER_START
+	Loop:
+		setmarker remove i
+		makemarker quad i x $displayCenterY false
+		setmarker texture i false "copper-wall"
+		op add i i 1
+		op add x x $RAYCAST_RENDER_WIDTH
+	jump Loop lessThan i $RAYCAST_PROC_COLLUMN_END
+endmac
